@@ -1,0 +1,178 @@
+name: Kremlin
+version: 1.0.0
+main: me.lawsonhart.kremlin.Kremlin
+api-version: '26.2'
+author: Lawson Hart
+description: Combat tagging, teleport rules, homes, community hub, tpa, offline invsee/enderchest, gradient nicknames, display-name messages and unlimited villager trades.
+folia-supported: true
+softdepend: [Essentials, EssentialsX, SimpleTeams]
+
+commands:
+  kremlin:
+    description: Combat status, action bar style, reload, import homes.
+    usage: /kremlin [bar|reload|importhomes]
+    aliases: [combatprev, cprev]
+  nickg:
+    description: Open the gradient nickname builder.
+    usage: /nickg
+    permission: kremlin.nickg
+  horsie:
+    description: Spawn a maxed-out horse in the colourway of your choice.
+    usage: /horsie <colour> [style]
+  dragondamage:
+    description: Who has done the most damage to the ender dragon.
+    usage: /dragondamage
+    aliases: [dragon, dragondmg]
+  clearchat:
+    description: Wipe chat for everyone online.
+    usage: /clearchat
+    aliases: [cc, chatclear]
+  slowchat:
+    description: Set how long players must wait between messages.
+    usage: /slowchat <seconds|off>
+    aliases: [chatslow, slowmode]
+  # Registered purely so the client knows these exist and tab-completes them. They are all
+  # handled in PlayerCommandPreprocessEvent, which fires before dispatch, so these executors
+  # never actually run -- and where Essentials owns the same label, it keeps it harmlessly.
+  home:
+    description: Go to a home, or open the homes menu.
+    usage: /home [name]
+  sethome:
+    description: Set a home here.
+    usage: /sethome [name]
+    aliases: [createhome]
+  delhome:
+    description: Delete a home.
+    usage: /delhome <name>
+    aliases: [remhome, removehome]
+  renamehome:
+    description: Rename a home.
+    usage: /renamehome <old> <new>
+    aliases: [homerename, movehome]
+  homes:
+    description: Open the homes menu.
+    usage: /homes
+    aliases: [listhomes]
+  adminhome:
+    description: Open another player's homes.
+    usage: /adminhome <player>
+    aliases: [homeadmin, homeof]
+  comhub:
+    description: Teleport to the community hub.
+    usage: /comhub
+    aliases: [communityhub]
+  setcomhub:
+    description: Set the community hub here.
+    usage: /setcomhub
+    aliases: [setcommunityhub]
+  delcomhub:
+    description: Clear the community hub.
+    usage: /delcomhub
+    aliases: [delcommunityhub]
+  playerlist:
+    description: Everyone who has ever played, with nicknames and teams.
+    usage: /playerlist
+    aliases: [players, plist]
+  invsee:
+    description: Open a player's inventory, online or off.
+    usage: /invsee <player>
+    aliases: [openinv, seeinv]
+  enderchest:
+    description: Open your ender chest, or a player's, online or off.
+    usage: /enderchest [player]
+    aliases: [ec, echest, endersee, invseeender]
+  # /hq, /sethq and /delhq are deliberately NOT declared here: SimpleTeams registers them
+  # itself as shortcuts for /team home, and Kremlin only gates the teleport.
+  tpa:
+    description: Ask to teleport to a player, or open the menu.
+    usage: /tpa [player]
+    aliases: [tpask, call]
+  tpahere:
+    description: Ask a player to teleport to you.
+    usage: /tpahere [player]
+    aliases: [tpaskhere]
+  tpaccept:
+    description: Accept a teleport request.
+    usage: /tpaccept [player]
+    aliases: [tpyes]
+  tpdeny:
+    description: Deny a teleport request.
+    usage: /tpdeny [player]
+    aliases: [tpno]
+  tpacancel:
+    description: Cancel a teleport request you sent.
+    usage: /tpacancel [player]
+    aliases: [tpcancel]
+
+# Every combatprev.* node below is still honoured in code alongside its kremlin.* twin, so a
+# LuckPerms setup from before the merge keeps working untouched. So do the Essentials nodes.
+permissions:
+  kremlin.nickg:
+    description: Allows use of /nickg.
+    default: true
+  kremlin.reload:
+    description: Reload the config. combatprev.reload also works.
+    default: op
+  kremlin.home:
+    description: Use /home. combatprev.home and essentials.home also work.
+    default: true
+  kremlin.sethome:
+    description: Use /sethome. combatprev.sethome and essentials.sethome also work.
+    default: true
+  kremlin.delhome:
+    description: Use /delhome. combatprev.delhome and essentials.delhome also work.
+    default: true
+  kremlin.home.others:
+    description: Use /adminhome. combatprev.home.others and essentials.home.others also work.
+    default: op
+  kremlin.homes.unlimited:
+    description: No home limit. essentials.sethome.multiple.unlimited also works.
+    default: false
+  kremlin.headinfo:
+    description: Be told whose head it is when you right-click a placed player head.
+    default: true
+  kremlin.playerlist:
+    description: Open /playerlist.
+    default: op
+  kremlin.invsee:
+    description: Open anyone's inventory, online or offline, and change it. essentials.invsee also works.
+    default: op
+  kremlin.enderchest:
+    description: Open your own ender chest. essentials.enderchest also works.
+    default: true
+  kremlin.enderchest.others:
+    description: Open anyone's ender chest, online or offline. essentials.enderchest.others also works.
+    default: op
+  kremlin.comhub.set:
+    description: Use /setcomhub and /delcomhub. combatprev.comhub.set and essentials.setwarp also work.
+    default: op
+  kremlin.clearchat:
+    description: Use /clearchat. essentials.clearchat also works.
+    default: op
+  kremlin.clearchat.exempt:
+    description: Keep your own chat scrollback when someone clears chat.
+    default: false
+  kremlin.slowchat:
+    description: Use /slowchat. essentials.slowchat also works.
+    default: op
+  kremlin.slowchat.bypass:
+    description: Talk as fast as you like while slow chat is on.
+    default: op
+  combatprev.reload:
+    description: Reload the config.
+    default: op
+  combatprev.home:
+    description: Use /home. essentials.home also works.
+    default: true
+  combatprev.sethome:
+    description: Use /sethome. essentials.sethome also works.
+    default: true
+  combatprev.delhome:
+    description: Use /delhome. essentials.delhome also works.
+    default: true
+  combatprev.home.others:
+    description: Use /adminhome. essentials.home.others also works.
+    default: op
+  combatprev.homes.unlimited:
+    description: No home limit. essentials.sethome.multiple.unlimited also works.
+    default: false

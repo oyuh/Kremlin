@@ -1,0 +1,211 @@
+# Kremlin
+#
+# Carried over from CombatPrev. An existing plugins/CombatPrev/config.yml is copied into
+# plugins/Kremlin on first start, so your own settings come with you; this file is layered
+# underneath it as defaults, so keys added later still read back.
+
+# How long a player stays combat-tagged after taking/dealing player damage.
+combat-seconds: 15
+
+# Fleeing a fight makes teleporting SLOWER, not impossible.
+#
+# If a player was in combat and has since moved stand-still-flee-distance blocks from where
+# they were last hit, this many seconds is ADDED to their teleport warmup. A 3s warmup becomes
+# 10s. They are never refused for moving -- they just wait longer, and moving during the
+# warmup cancels it. Someone who wasn't in a fight, or who hasn't run anywhere, is unaffected.
+stand-still-seconds: 7
+
+# How far from the last hit counts as running away. Changing world always counts.
+stand-still-flee-distance: 100
+
+# How long after the last hit the penalty can still apply.
+stand-still-window-seconds: 60
+
+# Warmup between someone accepting a /tpa and the teleport actually happening. BOTH players
+# are told, and either one moving cancels it. 0 disables.
+#
+# This is the BASE warmup for every teleport we run (/home, /hq, an accepted /tpa). The flee
+# penalty above is added on top when it applies. Combat tags still block a teleport outright.
+tpa-warmup-seconds: 3
+
+tpa:
+  # How long a request stays open before it expires.
+  request-seconds: 120
+  # After a tpa moves you, how long before you can send another request. 0 disables.
+  cooldown-seconds: 30
+
+# Combat-log punishment: kill the player and dump their whole inventory on the ground.
+kill-on-combat-log: true
+
+# Strip the invulnerability / no-damage ticks a teleport hands out, so nobody can
+# /spawn into a safety bubble. NOTE: vanilla world-spawn block protection is a
+# server.properties setting -- set `spawn-protection=0` there, a plugin can't touch it.
+clear-invulnerability-after-teleport: true
+
+# Teleport causes to block while locked. Ender pearls are deliberately allowed
+# (they're a combat mechanic). Valid values: PlayerTeleportEvent.TeleportCause names.
+blocked-teleport-causes:
+  - COMMAND
+  - PLUGIN
+  - SPECTATE
+  - CONSUMABLE_EFFECT   # chorus fruit. Was CHORUS_FRUIT before MC 26.2 -- rename it in an old config.
+  - END_GATEWAY
+  - END_PORTAL
+  - NETHER_PORTAL
+
+# Commands blocked while locked. Namespaces (essentials:home) are stripped before
+# matching, so listing the bare name covers /essentials:home too. An entry may name a
+# subcommand as well, e.g. "team sethome".
+#
+# Moving or clearing a team HQ is always blocked while tagged whether or not it is listed
+# here -- summoning your team to the fight is the escape this whole plugin exists to stop.
+blocked-commands:
+  - tp
+  - tpa
+  - tpahere
+  - tpaccept
+  - tpyes
+  - tpdeny
+  - tpno
+  - tpo
+  - tphere
+  - tpohere
+  - tpall
+  - tppos
+  - tptoggle
+  - home
+  - homes
+  - sethome
+  - spawn
+  - warp
+  - warps
+  - back
+  - rtp
+  - wild
+  - wilderness
+  - ec
+  - echest
+  - enderchest   # your own only -- /enderchest <player> is a staff command and isn't blocked
+  - kit
+  - heal
+  - feed
+  - god
+  - fly
+  - vanish
+  - v
+  - suicide
+  - kill
+  - logout
+  - afk
+  - top
+  - workbench
+  - wb
+  - craft
+  - anvil
+  - disposal
+
+homes:
+  # Named homes per player, on top of the always-available bed home and team HQ.
+  # Beaten by kremlin.homes.<n>, the old combatprev.homes.<n>, or essentials.sethome.multiple.<n>.
+  max-per-player: 3
+
+# NOTE: subclaims belong to SimpleTeams entirely -- its config owns subclaims.max-per-player,
+# subclaims.sign-name-length and subclaims.override-rank, the signs and protection are its
+# listeners, and claims.yml is its file. Manage them with /team claims and /team unclaim.
+
+# MiniMessage. Placeholders: <time>, <attacker>, <player>, <owner>, <access>, <count>, <max>
+messages:
+  # Action bar, "Full" style.
+  combat: "<red><bold>COMBAT</bold> <white><time>s <dark_gray>| <gray>last hit by <red><attacker>"
+  # Action bar, "Short" style. No attacker name. Players pick their style with /kremlin bar.
+  combat-short: "<red><bold>PvP</bold> <white><time>"
+  tagged: "<red>You are in combat! Logging out will <bold>kill you</bold> and drop your items."
+  ended: "<green>You are no longer in combat."
+  deny-combat: "<red>You can't do that for <yellow><time>s<red> - you're in combat!"
+  tpa-warmup: "<yellow>Teleporting in <white><time>s<yellow> - both players must stand still."
+  tpa-moved: "<red>Someone moved. Teleport cancelled."
+  # Same warmup, but for a solo teleport like /home -- there is no second player to mention.
+  warmup-solo: "<yellow>Teleporting in <white><time>s<yellow> - don't move."
+  warmup-solo-moved: "<red>You moved. Teleport cancelled."
+  # Big countdown shown to both players during the warmup. Updates 4x a second.
+  tpa-title: "<gold><bold><time>"
+  tpa-subtitle: "<yellow>Stand still to teleport"
+
+  # Our own tpa. <player> is the other person, <time> is seconds.
+  tpa-gui-title: "<dark_gray>Teleport Requests"
+  tpa-request: "<yellow><player><gray> wants to teleport to you. <dark_gray>(<time>s)"
+  tpa-request-here: "<yellow><player><gray> wants you to teleport to them. <dark_gray>(<time>s)"
+  tpa-accept-button: "<dark_gray>[<green><bold>ACCEPT</bold><dark_gray>]"
+  tpa-deny-button: "<dark_gray>[<red><bold>DENY</bold><dark_gray>]"
+  tpa-accept-hover: "<green>Accept <white><player><green>'s request"
+  tpa-deny-hover: "<red>Deny <white><player><red>'s request"
+  tpa-sent: "<green>Asked <yellow><player><green> if you can teleport to them. <gray>Expires in <time>s."
+  tpa-sent-here: "<green>Asked <yellow><player><green> to teleport to you. <gray>Expires in <time>s."
+  tpa-accepted-you: "<green>You accepted <yellow><player><green>'s request."
+  tpa-accepted-them: "<green><yellow><player><green> accepted your request."
+  tpa-denied-you: "<gray>You denied <yellow><player><gray>'s request."
+  tpa-denied-them: "<red><yellow><player><red> denied your request."
+  tpa-cancelled: "<gray>Request cancelled."
+  tpa-none: "<red>You have no teleport requests."
+  tpa-self: "<red>You can't teleport to yourself."
+  tpa-offline: "<red><yellow><player><red> isn't online."
+  tpa-cooldown: "<red>You can send another teleport request in <yellow><time>s<red>."
+  combat-log: "<dark_red><player> logged out in combat and died for it."
+  reloaded: "<green>Kremlin reloaded."
+
+  gui-title: "<dark_gray>Kremlin"
+
+  # Chat moderation. <player> is the staff member, <time> is seconds.
+  chat-no-permission: "<red>You don't have permission for that."
+  chat-cleared: "<gray>Chat was cleared by <yellow><player><gray>."
+  slowchat-on: "<yellow>Slow chat is on: <white><time>s<yellow> between messages. <gray>(<player>)"
+  slowchat-off: "<green>Slow chat is off. <gray>(<player>)"
+  slowchat-status-on: "<yellow>Slow chat is on at <white><time>s<yellow>. Use /slowchat off to stop it."
+  slowchat-status-off: "<gray>Slow chat is off. Use /slowchat <seconds> to turn it on."
+  slowchat-usage: "<red>Usage: /slowchat <seconds|off> <gray>(up to 3600)"
+  slowchat-wait: "<red>Slow chat: wait <yellow><time>s<red> before your next message."
+
+  # Homes. <name> is the home, <player> the owner, <count>/<max> the usage.
+  home-gui-title: "<dark_gray>Your Homes"
+  home-gui-title-admin: "<dark_gray>Homes of <player>"
+  home-set: "<green>Home <yellow><name><green> set. <gray><count>/<max> used."
+  home-deleted: "<green>Home <yellow><name><green> deleted."
+  home-going: "<gray>Travelling to <yellow><name><gray>."
+  home-unknown: "<red>You have no home called <yellow><name><red>."
+  home-unknown-player: "<red>Never seen a player called <yellow><player><red>."
+  home-limit: "<red>You already have <white><max><red> homes. Delete one first."
+  home-bad-name: "<red><yellow><name><red> isn't a usable home name."
+  home-no-bed: "<red>You have no bed home. Sleep in a bed first."
+  home-no-permission: "<red>You don't have permission for that."
+  home-locked: "<red><yellow><name><red> isn't yours to rename or delete - it's a shortcut, not a home."
+  home-delete-confirm: "<red>Shift-click <yellow><name><red> again within <time>s to delete it."
+  home-renamed: "<green>Home <yellow><name><green> renamed to <yellow><newname><green>."
+  home-exists: "<red>You already have a home called <yellow><name><red>."
+  home-usage-rename: "<red>Usage: /renamehome <old> <new>"
+  home-rename-prompt: "<yellow>Type the new name for <white><name><yellow> in chat."
+  home-rename-cancel: "<gray>Type <white>cancel<gray> to leave it alone."
+  home-rename-cancelled: "<gray>Rename cancelled."
+  home-usage-del: "<red>Usage: /delhome <name>"
+  home-usage-admin: "<red>Usage: /adminhome <player>"
+
+  # The community hub: one server-wide destination, set by staff with /setcomhub. It shows as
+  # the top-right button in the homes menu and teleports under the same rules as /home.
+  hub-set: "<green>Community hub set here. <gray>It's the top-right button in /homes."
+  hub-deleted: "<green>Community hub cleared."
+  hub-none: "<red>No community hub has been set yet."
+
+  # /invsee and /enderchest. <player> is whose inventory it is.
+  invsee-title: "<dark_gray>Inventory of <player>"
+  invsee-title-offline: "<dark_gray>Inventory of <player> <red>(offline)"
+  enderchest-title: "<dark_gray>Ender chest of <player>"
+  enderchest-title-offline: "<dark_gray>Ender chest of <player> <red>(offline)"
+  invsee-usage: "<red>Usage: /invsee <player>"
+  invsee-no-permission: "<red>You don't have permission for that."
+  invsee-no-data: "<red>No stored inventory for <yellow><player><red> - they haven't logged out since Kremlin was installed."
+  invsee-queued: "<yellow><player><gray> is offline. Your changes are applied the moment they next join."
+  # Right-clicking a placed player head. <name> is the real name, <player> the nickname.
+  head-owner: "<gray>That head is <white><name><gray>."
+  head-owner-nick: "<gray>That head is <player> <dark_gray>(<gray><name><dark_gray>)"
+  playerlist-title: "<dark_gray>Players"
+  playerlist-no-permission: "<red>You don't have permission for that."
+  invsee-applied: "<yellow>A staff member changed your inventory while you were away."

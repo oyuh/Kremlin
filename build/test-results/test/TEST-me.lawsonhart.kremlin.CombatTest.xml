@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="me.lawsonhart.kremlin.CombatTest" tests="12" skipped="0" failures="0" errors="0" timestamp="2026-08-18T20:47:55.911Z" hostname="LAWSONS-RIG" time="0.156">
+  <properties/>
+  <testcase name="homeNamesNormaliseTheSameWayEverywhere()" classname="me.lawsonhart.kremlin.CombatTest" time="0.074"/>
+  <testcase name="rootCommandStripsSlashNamespaceCaseAndArgs()" classname="me.lawsonhart.kremlin.CombatTest" time="0.006"/>
+  <testcase name="fleeCheckMeasuresDistanceFromTheFight()" classname="me.lawsonhart.kremlin.CombatTest" time="0.002"/>
+  <testcase name="aNicknameCannotHijackSomeoneElsesRealName()" classname="me.lawsonhart.kremlin.CombatTest" time="0.002"/>
+  <testcase name="slowChatParsesSecondsAndRefusesNonsense()" classname="me.lawsonhart.kremlin.CombatTest" time="0.001"/>
+  <testcase name="tpaGuiPagingHandlesEmptyExactAndWrapAround()" classname="me.lawsonhart.kremlin.CombatTest" time="0.0"/>
+  <testcase name="remainingCountsDownAndSelfEvicts()" classname="me.lawsonhart.kremlin.CombatTest" time="0.001"/>
+  <testcase name="tpaResolvesRealNamesAndEssentialsNicknames()" classname="me.lawsonhart.kremlin.CombatTest" time="0.0"/>
+  <testcase name="dragonSharesFormatCleanlyAndNeverDivideByZero()" classname="me.lawsonhart.kremlin.CombatTest" time="0.001"/>
+  <testcase name="subcommandsAreMatchedSoTeamSethomeCanBeBlocked()" classname="me.lawsonhart.kremlin.CombatTest" time="0.001"/>
+  <testcase name="namespacedCommandsCannotDodgeTheTakeover()" classname="me.lawsonhart.kremlin.CombatTest" time="0.0"/>
+  <testcase name="keysMissingFromAnOldConfigFallBackToTheBundledOne()" classname="me.lawsonhart.kremlin.CombatTest" time="0.045"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
