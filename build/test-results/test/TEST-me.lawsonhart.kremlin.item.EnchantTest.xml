@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="me.lawsonhart.kremlin.item.EnchantTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-08-21T22:32:55.342Z" hostname="LAWSONS-RIG" time="0.008">
+  <properties/>
+  <testcase name="everyAliasPointsAtAnEnchantmentThatExists()" classname="me.lawsonhart.kremlin.item.EnchantTest" time="0.004"/>
+  <testcase name="theTableOnlyCoversWhatTheRegistryWouldMiss()" classname="me.lawsonhart.kremlin.item.EnchantTest" time="0.001"/>
+  <testcase name="noAliasPointsAtAnotherAlias()" classname="me.lawsonhart.kremlin.item.EnchantTest" time="0.001"/>
+  <testcase name="theOldBukkitNamesAreCovered()" classname="me.lawsonhart.kremlin.item.EnchantTest" time="0.0"/>
+  <testcase name="everyAliasIsStoredInTheFormItIsLookedUpBy()" classname="me.lawsonhart.kremlin.item.EnchantTest" time="0.0"/>
+  <testcase name="aBlankOrMissingNameResolvesToNothing()" classname="me.lawsonhart.kremlin.item.EnchantTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

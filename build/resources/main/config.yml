@@ -72,6 +72,7 @@ blocked-commands:
   - tpohere
   - tpall
   - tppos
+  - tpaall
   - tptoggle
   - home
   - homes
@@ -103,6 +104,7 @@ blocked-commands:
   - craft
   - anvil
   - disposal
+  - trash
 
 homes:
   # Named homes per player, on top of the always-available bed home and team HQ.
@@ -113,99 +115,203 @@ homes:
 # subclaims.sign-name-length and subclaims.override-rank, the signs and protection are its
 # listeners, and claims.yml is its file. Manage them with /team claims and /team unclaim.
 
-# MiniMessage. Placeholders: <time>, <attacker>, <player>, <owner>, <access>, <count>, <max>
-messages:
-  # Action bar, "Full" style.
-  combat: "<red><bold>COMBAT</bold> <white><time>s <dark_gray>| <gray>last hit by <red><attacker>"
-  # Action bar, "Short" style. No attacker name. Players pick their style with /kremlin bar.
-  combat-short: "<red><bold>PvP</bold> <white><time>"
-  tagged: "<red>You are in combat! Logging out will <bold>kill you</bold> and drop your items."
-  ended: "<green>You are no longer in combat."
-  deny-combat: "<red>You can't do that for <yellow><time>s<red> - you're in combat!"
-  tpa-warmup: "<yellow>Teleporting in <white><time>s<yellow> - both players must stand still."
-  tpa-moved: "<red>Someone moved. Teleport cancelled."
-  # Same warmup, but for a solo teleport like /home -- there is no second player to mention.
-  warmup-solo: "<yellow>Teleporting in <white><time>s<yellow> - don't move."
-  warmup-solo-moved: "<red>You moved. Teleport cancelled."
-  # Big countdown shown to both players during the warmup. Updates 4x a second.
-  tpa-title: "<gold><bold><time>"
-  tpa-subtitle: "<yellow>Stand still to teleport"
+# Messages live in messages.yml.
 
-  # Our own tpa. <player> is the other person, <time> is seconds.
-  tpa-gui-title: "<dark_gray>Teleport Requests"
-  tpa-request: "<yellow><player><gray> wants to teleport to you. <dark_gray>(<time>s)"
-  tpa-request-here: "<yellow><player><gray> wants you to teleport to them. <dark_gray>(<time>s)"
-  tpa-accept-button: "<dark_gray>[<green><bold>ACCEPT</bold><dark_gray>]"
-  tpa-deny-button: "<dark_gray>[<red><bold>DENY</bold><dark_gray>]"
-  tpa-accept-hover: "<green>Accept <white><player><green>'s request"
-  tpa-deny-hover: "<red>Deny <white><player><red>'s request"
-  tpa-sent: "<green>Asked <yellow><player><green> if you can teleport to them. <gray>Expires in <time>s."
-  tpa-sent-here: "<green>Asked <yellow><player><green> to teleport to you. <gray>Expires in <time>s."
-  tpa-accepted-you: "<green>You accepted <yellow><player><green>'s request."
-  tpa-accepted-them: "<green><yellow><player><green> accepted your request."
-  tpa-denied-you: "<gray>You denied <yellow><player><gray>'s request."
-  tpa-denied-them: "<red><yellow><player><red> denied your request."
-  tpa-cancelled: "<gray>Request cancelled."
-  tpa-none: "<red>You have no teleport requests."
-  tpa-self: "<red>You can't teleport to yourself."
-  tpa-offline: "<red><yellow><player><red> isn't online."
-  tpa-cooldown: "<red>You can send another teleport request in <yellow><time>s<red>."
-  combat-log: "<dark_red><player> logged out in combat and died for it."
-  reloaded: "<green>Kremlin reloaded."
+############################################################
+# Chat
+############################################################
 
-  gui-title: "<dark_gray>Kremlin"
+# Chat formatting, replacing EssentialsChat. The keys and placeholders are EssentialsChat's, so
+# an existing config carries over as written -- on first start the chat settings are copied out
+# of plugins/Essentials/config.yml automatically and `chat.imported` below is set to stop it
+# happening twice. Delete that flag to import again.
+#
+# Placeholders: {MESSAGE} {USERNAME} {DISPLAYNAME} {NICKNAME} {PREFIX} {SUFFIX} {GROUP}
+#               {WORLD} {WORLDNAME} {SHORTWORLDNAME} {TEAMNAME} {TEAMPREFIX} {TEAMSUFFIX}
+#
+# Anything else in {braces} is handed to PlaceholderAPI as %that%, which is how EssentialsChat
+# resolved third-party placeholders -- {simpleteams_prefix_formatted} keeps working.
+#
+# Both &-codes and MiniMessage tags work. The player's own message is inserted as text, never as
+# markup, so nobody can type formatting into a format they were not given permission for.
+chat:
+  # false leaves chat exactly as the server rendered it.
+  enabled: true
 
-  # Chat moderation. <player> is the staff member, <time> is seconds.
-  chat-no-permission: "<red>You don't have permission for that."
-  chat-cleared: "<gray>Chat was cleared by <yellow><player><gray>."
-  slowchat-on: "<yellow>Slow chat is on: <white><time>s<yellow> between messages. <gray>(<player>)"
-  slowchat-off: "<green>Slow chat is off. <gray>(<player>)"
-  slowchat-status-on: "<yellow>Slow chat is on at <white><time>s<yellow>. Use /slowchat off to stop it."
-  slowchat-status-off: "<gray>Slow chat is off. Use /slowchat <seconds> to turn it on."
-  slowchat-usage: "<red>Usage: /slowchat <seconds|off> <gray>(up to 3600)"
-  slowchat-wait: "<red>Slow chat: wait <yellow><time>s<red> before your next message."
+  # Empty means "don't touch chat". {PREFIX} and {SUFFIX} come from Vault.
+  format: ''
 
-  # Homes. <name> is the home, <player> the owner, <count>/<max> the usage.
-  home-gui-title: "<dark_gray>Your Homes"
-  home-gui-title-admin: "<dark_gray>Homes of <player>"
-  home-set: "<green>Home <yellow><name><green> set. <gray><count>/<max> used."
-  home-deleted: "<green>Home <yellow><name><green> deleted."
-  home-going: "<gray>Travelling to <yellow><name><gray>."
-  home-unknown: "<red>You have no home called <yellow><name><red>."
-  home-unknown-player: "<red>Never seen a player called <yellow><player><red>."
-  home-limit: "<red>You already have <white><max><red> homes. Delete one first."
-  home-bad-name: "<red><yellow><name><red> isn't a usable home name."
-  home-no-bed: "<red>You have no bed home. Sleep in a bed first."
-  home-no-permission: "<red>You don't have permission for that."
-  home-locked: "<red><yellow><name><red> isn't yours to rename or delete - it's a shortcut, not a home."
-  home-delete-confirm: "<red>Shift-click <yellow><name><red> again within <time>s to delete it."
-  home-renamed: "<green>Home <yellow><name><green> renamed to <yellow><newname><green>."
-  home-exists: "<red>You already have a home called <yellow><name><red>."
-  home-usage-rename: "<red>Usage: /renamehome <old> <new>"
-  home-rename-prompt: "<yellow>Type the new name for <white><name><yellow> in chat."
-  home-rename-cancel: "<gray>Type <white>cancel<gray> to leave it alone."
-  home-rename-cancelled: "<gray>Rename cancelled."
-  home-usage-del: "<red>Usage: /delhome <name>"
-  home-usage-admin: "<red>Usage: /adminhome <player>"
+  # Per-group overrides, beating `format`. The group is the Vault primary group, matched
+  # case-insensitively. If your permissions plugin sets a group display name, use that.
+  group-formats: {}
 
-  # The community hub: one server-wide destination, set by staff with /setcomhub. It shows as
-  # the top-right button in the homes menu and teleports under the same rules as /home.
-  hub-set: "<green>Community hub set here. <gray>It's the top-right button in /homes."
-  hub-deleted: "<green>Community hub cleared."
-  hub-none: "<red>No community hub has been set yet."
+  # Set to true once the EssentialsX import has run.
+  imported: false
 
-  # /invsee and /enderchest. <player> is whose inventory it is.
-  invsee-title: "<dark_gray>Inventory of <player>"
-  invsee-title-offline: "<dark_gray>Inventory of <player> <red>(offline)"
-  enderchest-title: "<dark_gray>Ender chest of <player>"
-  enderchest-title-offline: "<dark_gray>Ender chest of <player> <red>(offline)"
-  invsee-usage: "<red>Usage: /invsee <player>"
-  invsee-no-permission: "<red>You don't have permission for that."
-  invsee-no-data: "<red>No stored inventory for <yellow><player><red> - they haven't logged out since Kremlin was installed."
-  invsee-queued: "<yellow><player><gray> is offline. Your changes are applied the moment they next join."
-  # Right-clicking a placed player head. <name> is the real name, <player> the nickname.
-  head-owner: "<gray>That head is <white><name><gray>."
-  head-owner-nick: "<gray>That head is <player> <dark_gray>(<gray><name><dark_gray>)"
-  playerlist-title: "<dark_gray>Players"
-  playerlist-no-permission: "<red>You don't have permission for that."
-  invsee-applied: "<yellow>A staff member changed your inventory while you were away."
+# Join and quit messages, in EssentialsX's keys and placeholders.
+# "none" keeps the vanilla message; "" hides it entirely.
+# Placeholders: {PLAYER} {DISPLAYNAME} {USERNAME} {PREFIX} {SUFFIX} {ONLINE} {UNIQUE}
+custom-join-message: "none"
+custom-quit-message: "none"
+
+newbies:
+  # Shown instead of the join message the first time somebody ever joins. "" disables it.
+  announce-format: ''
+
+############################################################
+# Nicknames, and the short player commands
+############################################################
+
+# Nicknames are stored as MiniMessage in users.yml. On first start these settings, and every
+# existing nickname, are read out of plugins/Essentials once.
+nick:
+  # Prefixed to every nickname so it reads as one. EssentialsX's nickname-prefix.
+  prefix: ''
+  # Nickname length limit.
+  max-length: 32
+  # A nickname must match this to be accepted. kremlin.nick.allowunsafe skips the check.
+  allowed-regex: '^[a-zA-Z_0-9§&<>:#-]+$'
+  # Measure the length without the colour codes.
+  ignore-colours-in-length: true
+  # Set to true once the EssentialsX settings and nicknames have been imported.
+  imported: false
+  imported-names: false
+
+# /heal also clears potion effects.
+remove-effects-on-heal: true
+
+# /speed takes 0-10; these cap what that actually maps to. kremlin.speed.bypass ignores them.
+max-walk-speed: 0.8
+max-fly-speed: 0.8
+
+############################################################
+# Items
+############################################################
+
+# Allow /repair on enchanted gear. false makes it kremlin.repair.enchanted only.
+repair-enchanted: true
+
+# Allow enchantment levels past the enchantment's own maximum, for anyone holding
+# kremlin.enchantments.allowunsafe. false caps everyone at the safe maximum.
+unsafe-enchantments: true
+
+# How many items /give hands over when no amount is typed. Below 1 means a full stack.
+default-stack-size: -1
+
+# The stack size kremlin.oversizedstacks unlocks for /give and /more.
+oversized-stacksize: 128
+
+# How many lore lines /itemlore add will stack up. kremlin.itemlore.bypass ignores it.
+max-itemlore-lines: 10
+
+############################################################
+# Warps
+############################################################
+
+# Require kremlin.warp.<name> for each warp on top of kremlin.warp. EssentialsX's setting of the
+# same name. Existing warps are read out of plugins/Essentials/warps on first start.
+per-warp-permission: false
+
+warps:
+  # Set to true once the EssentialsX warps have been imported.
+  imported: false
+
+############################################################
+# Punishments
+############################################################
+
+# Bans go on the server's own ban list, which already does expiry, reasons and the disconnect
+# screen. Mutes and the audit trail live in punishments.yml.
+
+# Longest a /mute or /tempban may be, in seconds. -1 for no limit. EssentialsX's settings, and
+# kremlin.mute.unlimited / kremlin.tempban.unlimited skip them.
+max-mute-time: -1
+max-tempban-time: -1
+
+# Commands a muted player may not run. Kremlin's own message commands are covered separately;
+# this is for anything else on the server that reaches other players.
+mute-commands:
+  - msg
+  - m
+  - tell
+  - whisper
+  - w
+  - pm
+  - t
+  - reply
+  - r
+  - me
+  - f
+
+punish:
+  # Used when a ban is issued with no reason typed.
+  default-reason: "Banned"
+
+  # The /punish menu. Each rung is a console command with {player} filled in, so a rung can run
+  # anything -- including another plugin's command -- without changing any code.
+  ladder:
+    - name: "Warn"
+      material: PAPER
+      command: "warn {player} Please read the rules"
+    - name: "Mute 1h"
+      material: BOOK
+      command: "mute {player} 1h Spam"
+    - name: "Kick"
+      material: IRON_DOOR
+      command: "kick {player} Please read the rules"
+    - name: "Tempban 1d"
+      material: IRON_BARS
+      command: "tempban {player} 1d Breaking the rules"
+    - name: "Ban"
+      material: BARRIER
+      command: "ban {player} Breaking the rules"
+
+############################################################
+# Discord
+############################################################
+
+# The bot runs inside this plugin -- there is no second process to deploy. JDA is fetched by
+# the server's own library loader (the `libraries:` block in plugin.yml), so the jar stays small.
+#
+# The bot needs the SERVER MEMBERS INTENT enabled on its application page, or it cannot read or
+# assign roles for anyone who is not currently speaking.
+discord:
+  enabled: false
+
+  # KEEP THIS OUT OF VERSION CONTROL. Anyone holding it controls the bot.
+  token: ''
+
+  # The Discord server id. Slash commands are registered against this one guild so they appear
+  # immediately rather than taking up to an hour, as global commands do.
+  guild: ''
+
+  # Role id allowed to use the moderation slash commands. Blank means nobody can.
+  staff-role: ''
+
+  # Channel id for the audit trail: every punishment, link and unlink. Blank turns it off.
+  # The bot needs Send Messages and Embed Links there.
+  log-channel: ''
+
+  link:
+    # How long a link code is good for.
+    code-seconds: 300
+    # Code length. Characters that look alike (O/0, I/1, S/5) are never used.
+    code-length: 6
+
+  roles:
+    # Given to anyone linked at all. Blank to skip.
+    verified: ''
+    # Permissions group -> role id, read through Vault.
+    ranks: {}
+    teams:
+      enabled: true
+      # Team name -> role id. Set these in game with:
+      #   /team admin discord <team> <roleid>
+      #   /team admin discord <team> clear
+      #   /team admin discord list
+      # Nothing is created and nothing is matched by name -- only roles listed here are touched.
+      map: {}
+
+  # How often roles are reconciled. SimpleTeams has no join/leave event to listen for, so team
+  # roles are polled rather than pushed.
+  resync-minutes: 30

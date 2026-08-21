@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="me.lawsonhart.kremlin.discord.TeamRoleCommandTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-08-21T22:32:55.306Z" hostname="LAWSONS-RIG" time="0.017">
+  <properties/>
+  <testcase name="ourSubcommandIsCaught()" classname="me.lawsonhart.kremlin.discord.TeamRoleCommandTest" time="0.001"/>
+  <testcase name="onlyASnowflakeIsAcceptedAsARoleId()" classname="me.lawsonhart.kremlin.discord.TeamRoleCommandTest" time="0.001"/>
+  <testcase name="everySimpleTeamsCommandIsLeftAlone()" classname="me.lawsonhart.kremlin.discord.TeamRoleCommandTest" time="0.0"/>
+  <testcase name="writingABindingKeepsTheConfigComments()" classname="me.lawsonhart.kremlin.discord.TeamRoleCommandTest" time="0.011"/>
+  <testcase name="teamNamesAreStoredCaseInsensitively()" classname="me.lawsonhart.kremlin.discord.TeamRoleCommandTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

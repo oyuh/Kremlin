@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="me.lawsonhart.kremlin.core.ResolutionTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-08-21T22:32:55.116Z" hostname="LAWSONS-RIG" time="0.007">
+  <properties/>
+  <testcase name="aDifferentNameDoesNotMatch()" classname="me.lawsonhart.kremlin.core.ResolutionTest" time="0.0"/>
+  <testcase name="aGradientNicknameIsFoundByTypingWhatItReads()" classname="me.lawsonhart.kremlin.core.ResolutionTest" time="0.003"/>
+  <testcase name="filterOffersOfflineNamesTheSameWayAsOnlineOnes()" classname="me.lawsonhart.kremlin.core.ResolutionTest" time="0.0"/>
+  <testcase name="aPrefixedNicknameIsFoundByTheNameItself()" classname="me.lawsonhart.kremlin.core.ResolutionTest" time="0.0"/>
+  <testcase name="anEmptyQueryMatchesNobody()" classname="me.lawsonhart.kremlin.core.ResolutionTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

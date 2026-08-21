@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="me.lawsonhart.kremlin.discord.DiscordLogTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-08-21T22:32:55.203Z" hostname="LAWSONS-RIG" time="0.07">
+  <properties/>
+  <testcase name="aReasonlessPunishmentStillProducesASendableEmbed()" classname="me.lawsonhart.kremlin.discord.DiscordLogTest" time="0.066"/>
+  <testcase name="aTimedEntryRendersWhatIsLeftRatherThanWhatItWas()" classname="me.lawsonhart.kremlin.discord.DiscordLogTest" time="0.001"/>
+  <testcase name="aVeryLongReasonIsStillWithinTheFieldLimit()" classname="me.lawsonhart.kremlin.discord.DiscordLogTest" time="0.002"/>
+  <testcase name="aPermanentEntryRendersItsLengthAsForever()" classname="me.lawsonhart.kremlin.discord.DiscordLogTest" time="0.0"/>
+  <testcase name="aOneOffHasNoLengthToShow()" classname="me.lawsonhart.kremlin.discord.DiscordLogTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[2026-08-21 17:32:55 [JDALogger] [WARN] Using fallback logger due to missing SLF4J implementation.
+2026-08-21 17:32:55 [JDALogger] [WARN] Please setup a logging framework to use JDA.
+2026-08-21 17:32:55 [JDALogger] [WARN] You can use our logging setup guide https://jda.wiki/setup/logging/
+2026-08-21 17:32:55 [JDALogger] [WARN] To disable the fallback logger, add the slf4j-nop dependency or use JDALogger.setFallbackLoggerEnabled(false)
+]]></system-err>
+</testsuite>

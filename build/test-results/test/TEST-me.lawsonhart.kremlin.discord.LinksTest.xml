@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="me.lawsonhart.kremlin.discord.LinksTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-08-21T22:32:55.274Z" hostname="LAWSONS-RIG" time="0.009">
+  <properties/>
+  <testcase name="expiryIsCheckedAgainstTheClockPassedIn()" classname="me.lawsonhart.kremlin.discord.LinksTest" time="0.002"/>
+  <testcase name="nothingUsableNormalisesToNothing()" classname="me.lawsonhart.kremlin.discord.LinksTest" time="0.002"/>
+  <testcase name="theAlphabetHasNoLookalikes()" classname="me.lawsonhart.kremlin.discord.LinksTest" time="0.001"/>
+  <testcase name="normalisingAbsorbsHowPeopleActuallyTypeACode()" classname="me.lawsonhart.kremlin.discord.LinksTest" time="0.0"/>
+  <testcase name="theAlphabetIsUpperCaseAndUnambiguous()" classname="me.lawsonhart.kremlin.discord.LinksTest" time="0.002"/>
+  <testcase name="aPendingCodeKnowsWhichSideMadeIt()" classname="me.lawsonhart.kremlin.discord.LinksTest" time="0.0"/>
+  <testcase name="normalisingKeepsEveryCharacterACodeCanContain()" classname="me.lawsonhart.kremlin.discord.LinksTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

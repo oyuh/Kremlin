@@ -3,9 +3,14 @@ version: 1.0.0
 main: me.lawsonhart.kremlin.Kremlin
 api-version: '26.2'
 author: Lawson Hart
-description: Combat tagging, teleport rules, homes, community hub, tpa, offline invsee/enderchest, gradient nicknames, display-name messages and unlimited villager trades.
+description: Combat tagging and teleport rules, homes and warps, tpa, chat formatting, private messages, punishments, moderation and player utilities. Replaces EssentialsX and EssentialsChat.
 folia-supported: true
-softdepend: [Essentials, EssentialsX, SimpleTeams]
+# Fetched by the server at load and given its own classloader, so nothing is shaded into
+# this jar and nothing here can collide with another plugin's copy.
+libraries:
+  - net.dv8tion:JDA:5.2.1
+
+softdepend: [SimpleTeams, Vault, VaultUnlocked, PlaceholderAPI, LuckPerms]
 
 commands:
   kremlin:
@@ -31,9 +36,12 @@ commands:
     description: Set how long players must wait between messages.
     usage: /slowchat <seconds|off>
     aliases: [chatslow, slowmode]
-  # Registered purely so the client knows these exist and tab-completes them. They are all
-  # handled in PlayerCommandPreprocessEvent, which fires before dispatch, so these executors
-  # never actually run -- and where Essentials owns the same label, it keeps it harmlessly.
+  # Real commands with real executors and completers. They used to be caught in
+  # PlayerCommandPreprocessEvent instead, purely so Essentials could not win the label; with
+  # Essentials gone that workaround is too, and Bukkit dispatches these normally.
+  #
+  # No `permission:` here on purpose: each executor checks its own nodes so it can answer with
+  # the configured message rather than Bukkit's stock one.
   home:
     description: Go to a home, or open the homes menu.
     usage: /home [name]
@@ -76,13 +84,284 @@ commands:
   invsee:
     description: Open a player's inventory, online or off.
     usage: /invsee <player>
-    aliases: [openinv, seeinv]
+    aliases: [openinv, seeinv, einvsee]
   enderchest:
     description: Open your ender chest, or a player's, online or off.
     usage: /enderchest [player]
-    aliases: [ec, echest, endersee, invseeender]
+    aliases: [ec, echest, enderc, endersee, invseeender, eenderchest, eechest, eec, eenderc]
   # /hq, /sethq and /delhq are deliberately NOT declared here: SimpleTeams registers them
   # itself as shortcuts for /team home, and Kremlin only gates the teleport.
+  link:
+    description: Link your Discord account.
+    usage: /link [code]
+    aliases: [discordlink]
+  unlink:
+    description: Unlink your Discord account.
+    usage: /unlink
+    aliases: [discordunlink]
+  resync:
+    description: Reconcile every linked player's Discord roles.
+    usage: /resync
+    aliases: [discordresync]
+  help:
+    description: What you can do here.
+    usage: /help
+    aliases: [ehelp, commands]
+  rules:
+    description: The server rules.
+    usage: /rules
+    aliases: [erules]
+  discord:
+    description: The Discord invite.
+    usage: /discord
+  website:
+    description: The website.
+    usage: /website
+  vote:
+    description: Where to vote.
+    usage: /vote
+  store:
+    description: The store.
+    usage: /store
+  links:
+    description: Every link at once.
+    usage: /links
+  ban:
+    description: Ban a player.
+    usage: /ban <player> [reason]
+    aliases: [eban]
+  tempban:
+    description: Ban a player for a while.
+    usage: /tempban <player> <duration> [reason]
+    aliases: [etempban]
+  unban:
+    description: Lift a ban.
+    usage: /unban <player>
+    aliases: [eunban, pardon]
+  banip:
+    description: Ban an address.
+    usage: /banip <player|ip> [reason]
+    aliases: [ebanip]
+  unbanip:
+    description: Lift an address ban.
+    usage: /unbanip <ip>
+    aliases: [eunbanip, pardonip]
+  mute:
+    description: Stop a player talking.
+    usage: /mute <player> <duration> [reason]
+    aliases: [emute]
+  unmute:
+    description: Let a player talk again.
+    usage: /unmute <player>
+    aliases: [eunmute]
+  kick:
+    description: Kick a player.
+    usage: /kick <player> [reason]
+    aliases: [ekick]
+  kickall:
+    description: Kick everyone.
+    usage: /kickall [reason]
+    aliases: [ekickall]
+  warn:
+    description: Warn a player, on the record.
+    usage: /warn <player> <reason>
+    aliases: [ewarn]
+  punish:
+    description: Open the punishment ladder for a player.
+    usage: /punish <player>
+    aliases: [epunish]
+  alts:
+    description: Accounts sharing an address with a player.
+    usage: /alts <player>
+    aliases: [ealts]
+  history:
+    description: A player's punishment record.
+    usage: /history <player>
+    aliases: [punishments, ehistory]
+  options:
+    description: Your own settings -- combat bar, messages, teleports.
+    usage: /options
+    aliases: [settings, kremlinoptions]
+  warp:
+    description: Travel to a warp.
+    usage: /warp [name] [player]
+    aliases: [ewarp]
+  warps:
+    description: List the warps.
+    usage: /warps
+    aliases: [ewarps, warplist]
+  setwarp:
+    description: Set a warp here.
+    usage: /setwarp <name>
+    aliases: [esetwarp, createwarp]
+  delwarp:
+    description: Delete a warp.
+    usage: /delwarp <name>
+    aliases: [edelwarp, remwarp, removewarp]
+  tp:
+    description: Teleport to a player, or a player to a player.
+    usage: /tp <player> [player]
+    aliases: [etp, tele, tp2p]
+  tphere:
+    description: Bring a player to you.
+    usage: /tphere <player>
+    aliases: [etphere, s]
+  tpo:
+    description: Teleport, ignoring teleport toggles.
+    usage: /tpo <player> [player]
+    aliases: [etpo]
+  tpohere:
+    description: Bring a player to you, ignoring their toggle.
+    usage: /tpohere <player>
+    aliases: [etpohere]
+  tpall:
+    description: Bring everyone to you.
+    usage: /tpall [player]
+    aliases: [etpall]
+  tpaall:
+    description: Ask everyone to teleport to you.
+    usage: /tpaall
+    aliases: [etpaall]
+  tppos:
+    description: Teleport to coordinates.
+    usage: /tppos <x> <y> <z> [yaw] [pitch] [world]
+    aliases: [etppos]
+  tptoggle:
+    description: Turn teleport requests on or off.
+    usage: /tptoggle [player] [on|off]
+    aliases: [etptoggle]
+  back:
+    description: Go back where you were.
+    usage: /back
+    aliases: [eback, return]
+  top:
+    description: Teleport to the surface.
+    usage: /top
+    aliases: [etop]
+  repair:
+    description: Repair the item in your hand, or everything you carry.
+    usage: /repair [hand|all]
+    aliases: [erepair, fix]
+  more:
+    description: Fill the held stack.
+    usage: /more
+    aliases: [emore]
+  give:
+    description: Give a player an item.
+    usage: /give <player> <item> [amount]
+    aliases: [egive, i, item, eitem]
+  skull:
+    description: Get a player's head.
+    usage: /skull [player]
+    aliases: [eskull]
+  itemname:
+    description: Rename the item in your hand.
+    usage: /itemname <name|clear>
+    aliases: [iname, eitemname]
+  itemlore:
+    description: Edit the lore of the item in your hand.
+    usage: /itemlore <add|set|remove|clear> [line] [text]
+    aliases: [il, eitemlore]
+  enchant:
+    description: Enchant the item in your hand.
+    usage: /enchant <enchantment> [level]
+    aliases: [eenchant, enchantment]
+  clearinventory:
+    description: Empty an inventory.
+    usage: /clearinventory [player|*] [item] [amount]
+    aliases: [ci, clean, clearinvent, eclearinventory]
+  trash:
+    description: Open a window that throws away whatever is left in it.
+    usage: /trash
+    aliases: [disposal, edisposal]
+  powertool:
+    description: Bind a command to the item in your hand.
+    usage: /powertool <command|clear>
+    aliases: [pt, epowertool]
+  powertooltoggle:
+    description: Turn your powertools on or off.
+    usage: /powertooltoggle
+    aliases: [ptt, epowertooltoggle]
+  nick:
+    description: Set a nickname, yours or a player's.
+    usage: /nick <nickname|off> [player]
+    aliases: [enick, nickname]
+  seen:
+    description: When a player was last online.
+    usage: /seen <player>
+    aliases: [eseen]
+  whois:
+    description: Everything known about a player.
+    usage: /whois <player>
+    aliases: [ewhois]
+  list:
+    description: Who is online.
+    usage: /list
+    aliases: [who, online, elist]
+  heal:
+    description: Restore health and hunger.
+    usage: /heal [player]
+    aliases: [eheal]
+  feed:
+    description: Restore hunger.
+    usage: /feed [player]
+    aliases: [efeed, eat]
+  kill:
+    description: Kill a player.
+    usage: /kill [player]
+    aliases: [ekill, suicide]
+  fly:
+    description: Toggle flight.
+    usage: /fly [player]
+    aliases: [efly]
+  speed:
+    description: Set walk or fly speed.
+    usage: /speed [walk|fly] <0-10> [player]
+    aliases: [espeed]
+  sudo:
+    description: Run a command as another player.
+    usage: /sudo <player> <command>
+    aliases: [esudo]
+  weather:
+    description: Change the weather.
+    usage: /weather <sun|storm|thunder> [seconds]
+    aliases: [eweather, sky]
+  gamemode:
+    description: Change game mode.
+    usage: /gamemode <mode> [player]
+    aliases: [gm, egamemode]
+  gms:
+    description: Survival mode.
+    usage: /gms [player]
+  gmc:
+    description: Creative mode.
+    usage: /gmc [player]
+  gma:
+    description: Adventure mode.
+    usage: /gma [player]
+  gmsp:
+    description: Spectator mode.
+    usage: /gmsp [player]
+  msg:
+    description: Send a private message.
+    usage: /msg <player> <message>
+    aliases: [m, tell, whisper, w, pm, t, emsg, etell, ewhisper]
+  reply:
+    description: Reply to the last person who messaged you.
+    usage: /reply <message>
+    aliases: [r, ereply]
+  msgtoggle:
+    description: Turn private messages on or off.
+    usage: /msgtoggle [on|off]
+    aliases: [messagetoggle, emsgtoggle]
+  ignore:
+    description: Stop seeing a player's chat and messages.
+    usage: /ignore [player]
+    aliases: [unignore, eignore]
+  broadcast:
+    description: Send a message to everyone online.
+    usage: /broadcast <message>
+    aliases: [bcast, ebroadcast]
   tpa:
     description: Ask to teleport to a player, or open the menu.
     usage: /tpa [player]
@@ -146,6 +425,303 @@ permissions:
   kremlin.comhub.set:
     description: Use /setcomhub and /delcomhub. combatprev.comhub.set and essentials.setwarp also work.
     default: op
+  kremlin.link:
+    description: Link a Discord account.
+    default: true
+  kremlin.discord.lookup:
+    description: See which Discord account a player is linked to.
+    default: op
+  kremlin.discord.teamrole:
+    description: Map a team to a Discord role with /team admin discord.
+    default: op
+  kremlin.discord.resync:
+    description: Force a full Discord role reconcile.
+    default: op
+  kremlin.help:
+    description: Use /help.
+    default: true
+  kremlin.rules:
+    description: Use /rules.
+    default: true
+  kremlin.discord:
+    description: Use /discord.
+    default: true
+  kremlin.website:
+    description: Use /website.
+    default: true
+  kremlin.vote:
+    description: Use /vote.
+    default: true
+  kremlin.store:
+    description: Use /store.
+    default: true
+  kremlin.links:
+    description: Use /links.
+    default: true
+  kremlin.ban:
+    description: Ban players.
+    default: op
+  kremlin.tempban:
+    description: Ban players for a while.
+    default: op
+  kremlin.tempban.unlimited:
+    description: Ignore max-tempban-time.
+    default: op
+  kremlin.unban:
+    description: Lift bans.
+    default: op
+  kremlin.banip:
+    description: Ban addresses.
+    default: op
+  kremlin.unbanip:
+    description: Lift address bans.
+    default: op
+  kremlin.mute:
+    description: Mute players.
+    default: op
+  kremlin.mute.unlimited:
+    description: Ignore max-mute-time.
+    default: op
+  kremlin.unmute:
+    description: Unmute players.
+    default: op
+  kremlin.kick:
+    description: Kick players.
+    default: op
+  kremlin.kickall:
+    description: Kick everyone.
+    default: op
+  kremlin.warn:
+    description: Warn players.
+    default: op
+  kremlin.punish:
+    description: Open the /punish ladder.
+    default: op
+  kremlin.punish.exempt:
+    description: Cannot be punished.
+    default: false
+  kremlin.punish.notify:
+    description: See punishments other staff hand out.
+    default: op
+  kremlin.alts:
+    description: See accounts sharing an address.
+    default: op
+  kremlin.history:
+    description: See punishment records.
+    default: op
+  kremlin.options:
+    description: Open /options.
+    default: true
+  kremlin.warp:
+    description: Use /warp and /warps.
+    default: true
+  kremlin.warp.others:
+    description: Send another player to a warp. essentials.warp.otherplayers also works.
+    default: op
+  kremlin.setwarp:
+    description: Create warps.
+    default: op
+  kremlin.delwarp:
+    description: Delete warps.
+    default: op
+  kremlin.tp:
+    description: Teleport yourself to a player.
+    default: op
+  kremlin.tp.others:
+    description: Teleport one player to another.
+    default: op
+  kremlin.tp.override:
+    description: Use /tpo and /tpohere, ignoring teleport toggles.
+    default: op
+  kremlin.tphere:
+    description: Bring a player to you.
+    default: op
+  kremlin.tpall:
+    description: Bring everyone to you.
+    default: op
+  kremlin.tpaall:
+    description: Ask everyone to teleport to you.
+    default: op
+  kremlin.tppos:
+    description: Teleport to coordinates.
+    default: op
+  kremlin.tptoggle:
+    description: Turn your own teleport requests on or off.
+    default: true
+  kremlin.tptoggle.others:
+    description: Turn another player's teleport requests on or off.
+    default: op
+  kremlin.back:
+    description: Use /back.
+    default: op
+  kremlin.back.ondeath:
+    description: Have /back remember where you died.
+    default: op
+  kremlin.top:
+    description: Use /top.
+    default: op
+  kremlin.repair:
+    description: Repair the item in your hand.
+    default: op
+  kremlin.repair.all:
+    description: Repair everything you are carrying.
+    default: op
+  kremlin.repair.enchanted:
+    description: Repair enchanted gear when repair-enchanted is false.
+    default: op
+  kremlin.more:
+    description: Fill the held stack.
+    default: op
+  kremlin.give:
+    description: Use /give.
+    default: op
+  kremlin.oversizedstacks:
+    description: Get stacks larger than vanilla allows.
+    default: op
+  kremlin.skull:
+    description: Get your own head.
+    default: op
+  kremlin.skull.others:
+    description: Get somebody else's head.
+    default: op
+  kremlin.itemname:
+    description: Rename items.
+    default: op
+  kremlin.itemlore:
+    description: Edit item lore.
+    default: op
+  kremlin.itemlore.bypass:
+    description: Ignore the lore line limit.
+    default: op
+  kremlin.enchant:
+    description: Use /enchant.
+    default: op
+  kremlin.enchantments.allowunsafe:
+    description: Enchant past the safe maximum.
+    default: op
+  kremlin.clearinventory:
+    description: Clear your own inventory.
+    default: op
+  kremlin.clearinventory.others:
+    description: Clear another player's inventory.
+    default: op
+  kremlin.clearinventory.all:
+    description: Clear everyone's inventory with /clearinventory *.
+    default: op
+  kremlin.trash:
+    description: Use /trash. essentials.disposal also works.
+    default: true
+  kremlin.powertool:
+    description: Bind commands to items.
+    default: op
+  kremlin.nick:
+    description: Change your own nickname. essentials.nick also works.
+    default: true
+  kremlin.nick.others:
+    description: Change another player's nickname. essentials.nick.others also works.
+    default: op
+  kremlin.nick.allowunsafe:
+    description: Skip the nickname character check. essentials.nick.allowunsafe also works.
+    default: op
+  kremlin.seen:
+    description: Use /seen. essentials.seen also works.
+    default: true
+  kremlin.seen.extra:
+    description: See IP addresses in /seen and /whois. essentials.seen.extra also works.
+    default: op
+  kremlin.whois:
+    description: Use /whois. essentials.whois also works.
+    default: true
+  kremlin.list:
+    description: Use /list. essentials.list also works.
+    default: true
+  kremlin.heal:
+    description: Heal yourself. essentials.heal also works.
+    default: op
+  kremlin.heal.others:
+    description: Heal another player. essentials.heal.others also works.
+    default: op
+  kremlin.feed:
+    description: Feed yourself. essentials.feed also works.
+    default: op
+  kremlin.feed.others:
+    description: Feed another player. essentials.feed.others also works.
+    default: op
+  kremlin.kill:
+    description: Kill yourself. essentials.kill also works.
+    default: op
+  kremlin.kill.others:
+    description: Kill another player. essentials.kill.others also works.
+    default: op
+  kremlin.kill.exempt:
+    description: Cannot be killed with /kill. essentials.kill.exempt also works.
+    default: op
+  kremlin.fly:
+    description: Toggle your own flight. essentials.fly also works.
+    default: op
+  kremlin.fly.others:
+    description: Toggle another player's flight. essentials.fly.others also works.
+    default: op
+  kremlin.speed:
+    description: Change your own speed. essentials.speed also works.
+    default: op
+  kremlin.speed.others:
+    description: Change another player's speed. essentials.speed.others also works.
+    default: op
+  kremlin.speed.bypass:
+    description: Ignore the max speed caps. essentials.speed.bypass also works.
+    default: op
+  kremlin.gamemode:
+    description: Change your own game mode. essentials.gamemode also works.
+    default: op
+  kremlin.gamemode.others:
+    description: Change another player's game mode. essentials.gamemode.others also works.
+    default: op
+  kremlin.sudo:
+    description: Run commands as another player. essentials.sudo also works.
+    default: op
+  kremlin.sudo.exempt:
+    description: Cannot be targeted by /sudo. essentials.sudo.exempt also works.
+    default: op
+  kremlin.weather:
+    description: Change the weather. essentials.weather also works.
+    default: op
+  kremlin.msg:
+    description: Use /msg and /reply. essentials.msg also works.
+    default: true
+  kremlin.msgtoggle:
+    description: Use /msgtoggle. essentials.msgtoggle also works.
+    default: true
+  kremlin.msgtoggle.override:
+    description: Message players who have private messages off.
+    default: op
+  kremlin.ignore:
+    description: Use /ignore. essentials.ignore also works.
+    default: true
+  kremlin.ignore.exempt:
+    description: Cannot be ignored by anyone.
+    default: op
+  kremlin.broadcast:
+    description: Use /broadcast. essentials.broadcast also works.
+    default: op
+  kremlin.chat.color:
+    description: Use colour codes in chat. essentials.chat.color also works.
+    default: false
+  kremlin.chat.format:
+    description: Use bold/italic/underline codes in chat. essentials.chat.format also works.
+    default: false
+  kremlin.chat.magic:
+    description: Use the obfuscated code in chat. essentials.chat.magic also works.
+    default: false
+  kremlin.msg.color:
+    description: Use colour codes in private messages. essentials.msg.color also works.
+    default: false
+  kremlin.silentjoin:
+    description: Join without a message. essentials.silentjoin also works.
+    default: false
+  kremlin.silentquit:
+    description: Quit without a message. essentials.silentquit also works.
+    default: false
   kremlin.clearchat:
     description: Use /clearchat. essentials.clearchat also works.
     default: op

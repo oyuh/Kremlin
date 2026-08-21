@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="me.lawsonhart.kremlin.core.MessagesTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-08-21T22:32:55.107Z" hostname="LAWSONS-RIG" time="0.004">
+  <properties/>
+  <testcase name="theOldMessagesBlockIsLiftedToTopLevelKeys()" classname="me.lawsonhart.kremlin.core.MessagesTest" time="0.002"/>
+  <testcase name="aFreshInstallHasNothingToCarry()" classname="me.lawsonhart.kremlin.core.MessagesTest" time="0.001"/>
+  <testcase name="whatTheAdminNeverTouchedFallsThroughToTheShippedCopy()" classname="me.lawsonhart.kremlin.core.MessagesTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

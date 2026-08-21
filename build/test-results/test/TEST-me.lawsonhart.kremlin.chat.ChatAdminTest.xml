@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="me.lawsonhart.kremlin.chat.ChatAdminTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-08-21T22:32:54.843Z" hostname="LAWSONS-RIG" time="0.032">
+  <properties/>
+  <testcase name="slowChatParsesSecondsAndRefusesNonsense()" classname="me.lawsonhart.kremlin.chat.ChatAdminTest" time="0.018"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
