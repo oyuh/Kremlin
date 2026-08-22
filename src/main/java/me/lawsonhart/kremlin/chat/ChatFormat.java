@@ -72,10 +72,11 @@ public final class ChatFormat implements Listener {
     }
 
     /**
-     * NORMAL, so the cancelling listeners (slow chat, the rename prompt) have already had their
-     * say and a cancelled message never gets rendered.
+     * HIGHEST, so we set the renderer last and win against any other chat formatter on the server
+     * -- a renderer set at NORMAL is simply overwritten by one set later. ignoreCancelled keeps
+     * the original reason for running late (slow chat, the rename prompt) satisfied.
      */
-    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onChat(final AsyncChatEvent event) {
         event.viewers().removeIf(viewer ->
                 viewer instanceof Player p && ignore.ignores(p.getUniqueId(), event.getPlayer().getUniqueId()));

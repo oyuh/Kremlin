@@ -67,8 +67,7 @@ public final class VaultHook {
 
     /** Never null: an absent provider, or one that throws, reads as "". */
     private String call(final Method method, final Player player) {
-        find();
-        if (chat == null) return "";
+        if (chat == null || method == null) return "";
         try {
             final Object value = method.invoke(chat, player);
             return value == null ? "" : value.toString();
@@ -81,15 +80,20 @@ public final class VaultHook {
         }
     }
 
+    // find() runs here, not in call(): the method field is read to build call()'s argument list,
+    // so resolving it inside call() is already too late and the first lookup of the run NPEs.
     public String group(final Player player) {
+        find();
         return call(primaryGroup, player);
     }
 
     public String prefix(final Player player) {
+        find();
         return call(prefix, player);
     }
 
     public String suffix(final Player player) {
+        find();
         return call(suffix, player);
     }
 }
