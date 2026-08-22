@@ -6,6 +6,7 @@ import me.lawsonhart.kremlin.info.InfoCommands;
 import me.lawsonhart.kremlin.misc.DisplayNameMessages;
 import me.lawsonhart.kremlin.misc.DragonDamage;
 import me.lawsonhart.kremlin.misc.HorseCommand;
+import me.lawsonhart.kremlin.misc.SpawnMobCommand;
 import me.lawsonhart.kremlin.misc.UnlimitedTrades;
 import me.lawsonhart.kremlin.player.NickGui;
 
@@ -19,6 +20,16 @@ public final class Kremlin extends JavaPlugin {
 
     private Combat combat;
 
+    /**
+     * The feature bundle, so other plugins can reach the bits that are useful outside Kremlin --
+     * chiefly {@link Combat#displayName(org.bukkit.OfflinePlayer)}, which renders a nickname
+     * whether or not its owner is online. SimpleTeams reflects on this to show nicknames in
+     * /team info and to let people be invited by nickname.
+     */
+    public Combat combat() {
+        return combat;
+    }
+
     @Override
     public void onEnable() {
         getServer().getPluginManager().registerEvents(new DisplayNameMessages(), this);
@@ -28,6 +39,11 @@ public final class Kremlin extends JavaPlugin {
         final PluginCommand horsie = command("horsie");
         horsie.setExecutor(horse);
         horsie.setTabCompleter(horse);
+
+        final SpawnMobCommand spawnMob = new SpawnMobCommand(this);
+        final PluginCommand spawnmob = command("spawnmob");
+        spawnmob.setExecutor(spawnMob);
+        spawnmob.setTabCompleter(spawnMob);
 
         // Combat wires its own listeners, config and sub-features (homes, tpa, action bar).
         this.combat = new Combat(this);
@@ -45,7 +61,7 @@ public final class Kremlin extends JavaPlugin {
         handle(this.combat.getIgnore(), "ignore");
         command("broadcast").setExecutor(this.combat.getBroadcast());
         handle(this.combat.getNicknames(), "nick");
-        handle(this.combat.getLookup(), "seen", "whois", "list");
+        handle(this.combat.getLookup(), "seen", "whois", "list", "playtime");
         handle(this.combat.getPlayerCommands(), "heal", "feed", "kill", "fly", "speed",
                 "sudo", "weather", "gamemode", "gms", "gmc", "gma", "gmsp");
         handle(this.combat.getItemCommands(), "repair", "more", "give", "skull", "itemname",

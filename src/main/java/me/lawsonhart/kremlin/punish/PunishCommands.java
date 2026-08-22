@@ -10,6 +10,7 @@ import me.lawsonhart.kremlin.core.Users;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.BanEntry;
+import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -91,12 +92,39 @@ public final class PunishCommands implements CommandExecutor, TabCompleter {
         // /banip and /unbanip take an address as readily as a name.
         if (BANIP.contains(cmd)) return banIp(sender, args);
 
-        final UUID id = plugin.findPlayer(args[0]);
-        if (id == null) {
+        UUID id = plugin.findPlayer(args[0]);
+        if (id == null && !BAN.contains(cmd) && !TEMPBAN.contains(cmd) && !UNBAN.contains(cmd)) {
+            // Everything else needs somebody who actually exists here: you cannot mute, warn or
+            // look up the history of a name the server has never seen.
             sender.sendMessage(plugin.msg("msg-unknown", Placeholder.unparsed("player", args[0])));
             return true;
         }
-        final OfflinePlayer target = plugin.getServer().getOfflinePlayer(id);
+        if (id == null) {
+            final String wanted = args[0];
+            sender.sendMessage(plugin.msg("ban-looking-up", Placeholder.unparsed("player", wanted)));
+            // Banning ahead of a first join is a real thing staff need -- a name from another
+            // server, or somebody announcing they are coming to grief. Resolving it means asking
+            // Mojang on an online-mode server, which is a network call and must not happen on a
+            // region thread, so the rest of the command continues once the answer is back.
+            Bukkit.getAsyncScheduler().runNow(plugin.owner(), t -> {
+                final UUID resolved = resolveForBan(wanted);
+                if (resolved == null) {
+                    sender.sendMessage(plugin.msg("ban-unresolvable",
+                            Placeholder.unparsed("player", wanted)));
+                    return;
+                }
+                // Back onto a server thread: what follows touches the ban list and may kick.
+                Bukkit.getGlobalRegionScheduler().execute(plugin.owner(),
+                        () -> punish(sender, plugin.getServer().getOfflinePlayer(resolved), args, cmd));
+            });
+            return true;
+        }
+        return punish(sender, plugin.getServer().getOfflinePlayer(id), args, cmd);
+    }
+
+    /** Everything after "we know who they are". Split out so the ban path can reach it async. */
+    private boolean punish(final CommandSender sender, final OfflinePlayer target,
+                           final String[] args, final String cmd) {
         final Player online = target.getPlayer();
         // Exempt is checked once, here, so every punishment respects it the same way.
         if (online != null && punishments.exempt(online) && !UNBAN.contains(cmd) && !UNMUTE.contains(cmd)
@@ -133,6 +161,30 @@ public final class PunishCommands implements CommandExecutor, TabCompleter {
     }
 
     // ---------------------------------------------------------------- bans
+
+    /**
+     * The UUID to ban a name under when the server has never seen it.
+     *
+     * On an online-mode server that is Mojang's answer, which is what the account will present at
+     * login; on offline mode it is the name-derived UUID the server generates itself. Either way
+     * this is the id that account will arrive with, so the ban is already there when they try.
+     *
+     * The lookup is a network call on online mode -- see the caller, which runs it off the region
+     * thread -- and a miss means the name does not exist rather than that we failed.
+     */
+    private UUID resolveForBan(final String name) {
+        if (!name.matches("[A-Za-z0-9_]{1,16}")) return null; // not a username at all
+        try {
+            final com.destroystokyo.paper.profile.PlayerProfile profile =
+                    plugin.getServer().createProfile(name);
+            if (profile.getId() == null) profile.complete(false);
+            return profile.getId() != null
+                    ? profile.getId() : plugin.getServer().getOfflinePlayer(name).getUniqueId();
+        } catch (final Throwable t) {
+            plugin.getLogger().warning("Could not resolve '" + name + "' for a ban: " + t);
+            return null;
+        }
+    }
 
     /**
      * Straight onto the server's ban list, which is what makes the kick screen, the expiry and

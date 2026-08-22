@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="me.lawsonhart.kremlin.misc.UnlimitedTradesTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-08-21T22:32:55.353Z" hostname="LAWSONS-RIG" time="0.004">
-  <properties/>
-  <testcase name="repairedMaxUsesNeverInflatesPrices()" classname="me.lawsonhart.kremlin.misc.UnlimitedTradesTest" time="0.003"/>
-  <testcase name="maxValueMaxUsesUnderflowsDemandIntoRaisingPrices()" classname="me.lawsonhart.kremlin.misc.UnlimitedTradesTest" time="0.0"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

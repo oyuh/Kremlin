@@ -315,3 +315,20 @@ discord:
   # How often roles are reconciled. SimpleTeams has no join/leave event to listen for, so team
   # roles are polled rather than pushed.
   resync-minutes: 30
+
+# The MOTD in the multiplayer server list. Off until you turn it on -- server.properties
+# keeps the MOTD while this is false.
+#
+# Every line is MiniMessage: <gradient:#a:#b>, <#ff0000>, <bold>, the lot. <online> and <max>
+# are the current and maximum player counts. Prefix a line with <center> to have it padded to
+# the middle of the list entry.
+#
+# The client shows TWO lines and clips each at roughly 45 characters.
+motd:
+  enabled: false
+  lines:
+    - "<center><gradient:#ff4d4d:#ffb84d><bold>Kremlin</bold></gradient>"
+    - "<center><gray><online>/<max> online</gray>"
+  # Pixel width of the list entry's text area, used by <center>. Nudge it if centring
+  # looks a touch off in your client.
+  center-width: 270

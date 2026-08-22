@@ -86,6 +86,16 @@ public final class TeamHook {
      * The name of this player's team, or null for teamless (and for any SimpleTeams that doesn't
      * expose the lookup). Accepts either a plain String or a team object with a getName().
      */
+    /**
+     * Whether team membership can be answered at all right now.
+     *
+     * The difference between "not in a team" and "cannot tell" matters: a caller that removes a
+     * team role on a null answer would strip everybody's role the moment SimpleTeams is missing.
+     */
+    public boolean available() {
+        return api != null && teamOf != null;
+    }
+
     public String teamNameOf(UUID player) {
         if (api == null || teamOf == null) return null;
         try {

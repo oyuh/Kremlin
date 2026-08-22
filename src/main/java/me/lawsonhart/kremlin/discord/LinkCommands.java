@@ -40,7 +40,7 @@ public final class LinkCommands implements CommandExecutor, TabCompleter {
                              final String label, final String[] args) {
         final String cmd = Combat.rootCommand(label);
         if ("discord".equals(cmd)) return lookup(sender, args);
-        if ("resync".equals(cmd)) return resync(sender);
+        if ("resync".equals(cmd)) return resync(sender, args);
 
         if (!(sender instanceof Player p)) {
             sender.sendMessage(Component.text("Players only -- there is nothing to link."));
@@ -94,8 +94,19 @@ public final class LinkCommands implements CommandExecutor, TabCompleter {
         return true;
     }
 
-    /** Staff-triggered full reconcile, for when somebody changed a rank outside the game. */
-    private boolean resync(final CommandSender sender) {
+    /**
+     * With no argument, a player fixes their own roles. With {@code all}, staff reconcile
+     * everybody -- for when a rank changed outside the game.
+     *
+     * The self form is deliberately open to everyone: the usual reason somebody needs it is that
+     * their roles are already wrong, and making them find a staff member to fix it is the worst
+     * possible answer.
+     */
+    private boolean resync(final CommandSender sender, final String[] args) {
+        final boolean everyone = args.length > 0
+                && (args[0].equalsIgnoreCase("all") || args[0].equalsIgnoreCase("everyone"));
+        if (!everyone) return resyncSelf(sender);
+
         if (!Perms.may(sender, "kremlin.discord.resync")) {
             sender.sendMessage(plugin.msg("chat-no-permission"));
             return true;
@@ -108,6 +119,30 @@ public final class LinkCommands implements CommandExecutor, TabCompleter {
         org.bukkit.Bukkit.getAsyncScheduler().runNow(plugin.owner(), t ->
                 sender.sendMessage(plugin.msg("discord-resynced",
                         Placeholder.unparsed("count", String.valueOf(roleSync.syncAll())))));
+        return true;
+    }
+
+    /** One player fixing their own roles, with a straight answer about what changed. */
+    private boolean resyncSelf(final CommandSender sender) {
+        if (!(sender instanceof Player p)) {
+            sender.sendMessage(plugin.msg("console-needs-player"));
+            return true;
+        }
+        if (!bot.ready()) {
+            sender.sendMessage(plugin.msg("discord-off"));
+            return true;
+        }
+        p.sendMessage(plugin.msg("resync-checking"));
+        // Off-thread: a Discord round trip. The reply comes back through the callback.
+        org.bukkit.Bukkit.getAsyncScheduler().runNow(plugin.owner(), t ->
+                roleSync.syncReporting(p.getUniqueId(), outcome -> p.sendMessage(switch (outcome) {
+                    case "off" -> plugin.msg("discord-off");
+                    case "unlinked" -> plugin.msg("resync-unlinked");
+                    case "notinguild" -> plugin.msg("resync-not-in-guild");
+                    case "ok" -> plugin.msg("resync-ok");
+                    default -> plugin.msg("resync-fixed",
+                            Placeholder.unparsed("count", outcome));
+                })));
         return true;
     }
 

@@ -6,6 +6,7 @@ import me.lawsonhart.kremlin.chat.ChatFormat;
 import me.lawsonhart.kremlin.chat.ChatImport;
 import me.lawsonhart.kremlin.chat.Ignore;
 import me.lawsonhart.kremlin.chat.JoinQuit;
+import me.lawsonhart.kremlin.chat.Motd;
 import me.lawsonhart.kremlin.chat.Msg;
 import me.lawsonhart.kremlin.chat.Papi;
 import me.lawsonhart.kremlin.core.VaultHook;
@@ -155,6 +156,7 @@ public final class Combat implements Listener, CommandExecutor {
     private final Users users;
     private ChatFormat chatFormat;
     private JoinQuit joinQuit;
+    private Motd motd;
     private Msg msg;
     private Ignore ignore;
     private Broadcast broadcast;
@@ -285,6 +287,10 @@ public final class Combat implements Listener, CommandExecutor {
         joinQuit = new JoinQuit(this, vault);
         joinQuit.load();
         getServer().getPluginManager().registerEvents(joinQuit, plugin);
+
+        motd = new Motd(this);
+        motd.load();
+        getServer().getPluginManager().registerEvents(motd, plugin);
 
         msg = new Msg(this, users, ignore);
         getServer().getPluginManager().registerEvents(msg, plugin);
@@ -454,6 +460,7 @@ public final class Combat implements Listener, CommandExecutor {
         if (roleSync != null) roleSync.load();
         if (discordLog != null) discordLog.load();
         if (joinQuit != null) joinQuit.load();
+        if (motd != null) motd.load();
         combatMillis = getConfig().getLong("combat-seconds", 15) * 1000L;
         stillMillis = getConfig().getLong("stand-still-seconds", 7) * 1000L;
         double fleeDistance = getConfig().getDouble("stand-still-flee-distance", 100.0);

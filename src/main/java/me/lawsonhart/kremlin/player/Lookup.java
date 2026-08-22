@@ -1,6 +1,7 @@
 package me.lawsonhart.kremlin.player;
 
 import me.lawsonhart.kremlin.combat.Combat;
+import me.lawsonhart.kremlin.core.Durations;
 import me.lawsonhart.kremlin.core.Names;
 import me.lawsonhart.kremlin.core.Perms;
 import net.kyori.adventure.text.Component;
@@ -8,6 +9,7 @@ import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.Statistic;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -32,6 +34,7 @@ public final class Lookup implements CommandExecutor, TabCompleter {
 
     private static final Set<String> SEEN = Set.of("seen", "eseen");
     private static final Set<String> WHOIS = Set.of("whois", "ewhois");
+    private static final Set<String> PLAYTIME = Set.of("playtime", "eplaytime", "played", "ontime");
 
     private final Combat plugin;
     private final Nicknames nicknames;
@@ -45,28 +48,76 @@ public final class Lookup implements CommandExecutor, TabCompleter {
     public boolean onCommand(final CommandSender sender, final Command command,
                              final String label, final String[] args) {
         final String cmd = Combat.rootCommand(label);
-        if (!SEEN.contains(cmd) && !WHOIS.contains(cmd)) return list(sender);
+        if (!SEEN.contains(cmd) && !WHOIS.contains(cmd) && !PLAYTIME.contains(cmd)) return list(sender);
 
-        final String node = SEEN.contains(cmd) ? "seen" : "whois";
-        if (!Perms.may(sender, "kremlin." + node, "essentials." + node)) {
+        // /playtime with no argument is about yourself, which is the common case and needs no
+        // second permission; naming somebody else does.
+        final boolean self = PLAYTIME.contains(cmd) && args.length == 0;
+        final String node = SEEN.contains(cmd) ? "seen"
+                : WHOIS.contains(cmd) ? "whois"
+                : self ? "playtime" : "playtime.others";
+        if (PLAYTIME.contains(cmd) && !Perms.may(sender, "kremlin." + node, "essentials." + node)
+                // essentials.playtime alone has always covered your own; don't demand the .others
+                // node from somebody who only ever had the plain one.
+                && !(self && Perms.may(sender, "kremlin.playtime", "essentials.playtime"))) {
             sender.sendMessage(plugin.msg("chat-no-permission"));
             return true;
         }
-        if (args.length == 0) {
+        if (!PLAYTIME.contains(cmd) && !Perms.may(sender, "kremlin." + node, "essentials." + node)) {
+            sender.sendMessage(plugin.msg("chat-no-permission"));
+            return true;
+        }
+        if (args.length == 0 && !self) {
             sender.sendMessage(plugin.msg(node + "-usage"));
             return true;
         }
+        if (self && !(sender instanceof Player)) {
+            sender.sendMessage(plugin.msg("console-needs-player"));
+            return true;
+        }
 
-        final UUID id = plugin.findPlayer(args[0]);
+        final UUID id = self ? ((Player) sender).getUniqueId() : plugin.findPlayer(args[0]);
         final OfflinePlayer target = id == null ? null : plugin.getServer().getOfflinePlayer(id);
         if (target == null || !PlayerCommands.known(target)) {
             sender.sendMessage(plugin.msg("msg-unknown", Placeholder.unparsed("player", args[0])));
             return true;
         }
         // Reading an offline player's record can touch disk, so keep it off the region thread.
-        Bukkit.getAsyncScheduler().runNow(plugin.owner(), t ->
-                sender.sendMessage(SEEN.contains(cmd) ? seen(sender, target) : whois(sender, target)));
+        Bukkit.getAsyncScheduler().runNow(plugin.owner(), t -> sender.sendMessage(
+                SEEN.contains(cmd) ? seen(sender, target)
+                        : WHOIS.contains(cmd) ? whois(sender, target)
+                        : playtime(target, self)));
         return true;
+    }
+
+    /**
+     * How long they have been on the server.
+     *
+     * The number is vanilla's own PLAY_ONE_MINUTE statistic, which despite the name counts
+     * ticks -- so it is right even for time played before this plugin existed, which a counter
+     * of our own could never be.
+     */
+    private Component playtime(final OfflinePlayer target, final boolean self) {
+        final long millis = playedMillis(target);
+        if (millis <= 0L) {
+            return plugin.msg(self ? "playtime-none-self" : "playtime-none",
+                    Placeholder.component("player", plugin.displayName(target)));
+        }
+        return plugin.msg(self ? "playtime-self" : "playtime-other",
+                Placeholder.component("player", plugin.displayName(target)),
+                Placeholder.unparsed("name", String.valueOf(target.getName())),
+                Placeholder.unparsed("time", Durations.describe(millis)));
+    }
+
+    /** Milliseconds played, or 0 when the server has no statistics for them. */
+    public static long playedMillis(final OfflinePlayer target) {
+        try {
+            // Ticks, not minutes. 20 per second.
+            return Math.max(0L, (long) target.getStatistic(Statistic.PLAY_ONE_MINUTE)) * 50L;
+        } catch (final Throwable t) {
+            // No statistics file yet, or a server that will not answer for an offline player.
+            return 0L;
+        }
     }
 
     private Component seen(final CommandSender sender, final OfflinePlayer target) {
@@ -141,7 +192,10 @@ public final class Lookup implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(final CommandSender sender, final Command command,
                                       final String label, final String[] args) {
         final String cmd = Combat.rootCommand(label);
-        if (args.length != 1 || (!SEEN.contains(cmd) && !WHOIS.contains(cmd))) return List.of();
+        if (args.length != 1
+                || (!SEEN.contains(cmd) && !WHOIS.contains(cmd) && !PLAYTIME.contains(cmd))) {
+            return List.of();
+        }
         return Names.filter(args[0], Names.online(plugin.getServer(), Names.offlineNames(plugin.getServer())));
     }
 }

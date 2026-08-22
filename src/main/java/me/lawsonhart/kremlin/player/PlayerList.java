@@ -1,6 +1,7 @@
 package me.lawsonhart.kremlin.player;
 
 import me.lawsonhart.kremlin.combat.Combat;
+import me.lawsonhart.kremlin.core.Durations;
 import me.lawsonhart.kremlin.core.TeamHook;
 import me.lawsonhart.kremlin.teleport.Tpa;
 
@@ -89,7 +90,7 @@ public final class PlayerList implements Listener, CommandExecutor {
 
     /** One row of the menu: everything gathered off-thread, ready to render. */
     private record Row(UUID id, String name, String nick, boolean online, long lastSeen,
-                       PlayerProfile skin, String discord) {}
+                       PlayerProfile skin, String discord, long played) {}
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -132,8 +133,10 @@ public final class PlayerList implements Listener, CommandExecutor {
         } catch (Throwable ignored) {
             // Player data we can't read is a blank column, not a failed command.
         }
+        // Statistics are a disk read for an offline player, which is why rows are built on the
+        // async scheduler rather than while the menu is being drawn.
         return new Row(o.getUniqueId(), o.getName(), nick, online != null, lastSeen,
-                skin(o, online), discordOf(o.getUniqueId()));
+                skin(o, online), discordOf(o.getUniqueId()), Lookup.playedMillis(o));
     }
 
     /**
@@ -286,6 +289,9 @@ public final class PlayerList implements Listener, CommandExecutor {
         lore.add(r.discord() == null
                 ? mm("<gray>Discord: <dark_gray>not linked")
                 : mm("<gray>Discord: <white>").append(Component.text(r.discord())));
+        lore.add(r.played() <= 0
+                ? mm("<gray>Playtime: <dark_gray>none")
+                : mm("<gray>Playtime: <white>" + Durations.describe(r.played())));
         lore.add(Component.empty());
         lore.add(r.online()
                 ? mm("<green>Online now")

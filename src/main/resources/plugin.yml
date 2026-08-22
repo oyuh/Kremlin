@@ -24,6 +24,10 @@ commands:
   horsie:
     description: Spawn a maxed-out horse in the colourway of your choice.
     usage: /horsie <colour> [style]
+  spawnmob:
+    description: Spawn any mob, with any of the options that mob has.
+    usage: /spawnmob <mob> [amount] [key:value ...]
+    aliases: [mob, summonmob]
   dragondamage:
     description: Who has done the most damage to the ender dragon.
     usage: /dragondamage
@@ -100,9 +104,9 @@ commands:
     usage: /unlink
     aliases: [discordunlink]
   resync:
-    description: Reconcile every linked player's Discord roles.
-    usage: /resync
-    aliases: [discordresync]
+    description: Fix your own Discord roles, or everyone's with "all".
+    usage: /resync [all]
+    aliases: [discordresync, syncroles]
   help:
     description: What you can do here.
     usage: /help
@@ -298,6 +302,10 @@ commands:
     description: Who is online.
     usage: /list
     aliases: [who, online, elist]
+  playtime:
+    description: How long a player has been on the server.
+    usage: /playtime [player]
+    aliases: [eplaytime, played, ontime]
   heal:
     description: Restore health and hunger.
     usage: /heal [player]
@@ -634,6 +642,12 @@ permissions:
     default: true
   kremlin.list:
     description: Use /list. essentials.list also works.
+    default: true
+  kremlin.playtime:
+    description: See your own playtime. essentials.playtime also works.
+    default: true
+  kremlin.playtime.others:
+    description: See another player's playtime. essentials.playtime.others also works.
     default: true
   kremlin.heal:
     description: Heal yourself. essentials.heal also works.

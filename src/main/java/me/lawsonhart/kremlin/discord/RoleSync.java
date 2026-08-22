@@ -5,7 +5,6 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -151,9 +150,9 @@ public final class RoleSync implements Listener {
 
         // The wanted set is worked out here, off Discord's threads and without touching the
         // world; only the add/remove goes to Discord, and only when it differs.
-        final Set<String> wanted = wantedRoles(player, guild);
+        final Desired desired = wantedRoles(player);
         guild.retrieveMemberById(discordId).queue(
-                member -> apply(guild, member, wanted),
+                member -> apply(guild, member, desired),
                 error -> {
                     // Left the server, or never joined it. Not an error worth shouting about.
                 });
@@ -171,39 +170,96 @@ public final class RoleSync implements Listener {
         final Guild guild = bot.guild();
         if (guild == null) return;
         guild.retrieveMemberById(discordId).queue(
-                member -> apply(guild, member, Set.of()),
+                // Unlinking is decidable for every category, so everything of ours comes off.
+                member -> apply(guild, member, new Desired(Set.of(), everything())),
                 error -> {
                     // Not in the server any more; nothing to take off.
                 });
     }
 
-    /** Role ids this player should hold, out of the ones we own. */
-    private Set<String> wantedRoles(final UUID player, final Guild guild) {
-        final Set<String> wanted = new HashSet<>();
-        if (!verifiedRole.isEmpty()) wanted.add(verifiedRole);
+    /**
+     * What a player should hold, and which of our roles this pass is entitled to take away.
+     *
+     * The two are not the same, and conflating them is destructive. "You should not have the VIP
+     * role" and "I could not work out your rank just now" produce an identical empty answer, but
+     * only the first one justifies removing it. Anything we could not determine is left exactly
+     * as it is until a pass that can determine it.
+     */
+    private record Desired(Set<String> wanted, Set<String> removable) {}
 
-        final OfflinePlayer offline = plugin.getServer().getOfflinePlayer(player);
-        final Player online = offline.getPlayer();
-        if (online != null && !rankRoles.isEmpty()) {
-            // Vault only answers for an online player, so a rank role is confirmed while they
-            // are on and simply left alone while they are not.
+    private Desired wantedRoles(final UUID player) {
+        final Set<String> wanted = new HashSet<>();
+        final Set<String> removable = new HashSet<>();
+
+        // Linked is the whole condition, and we know it: always decidable.
+        if (!verifiedRole.isEmpty()) {
+            wanted.add(verifiedRole);
+            removable.add(verifiedRole);
+        }
+
+        // Vault only answers for an online player. Offline, the rank is unknown -- not absent --
+        // so no rank role is touched. Without this the timer strips the rank role off every
+        // linked player who happens to be offline, which is most of them.
+        final Player online = plugin.getServer().getPlayer(player);
+        if (!rankRoles.isEmpty() && online != null && plugin.getVault().present()) {
+            removable.addAll(rankRoles.values());
             final String group = plugin.getVault().group(online);
-            final String role = group == null ? null : rankRoles.get(group.toLowerCase(Locale.ROOT));
+            final String role = group == null || group.isBlank()
+                    ? null : rankRoles.get(group.toLowerCase(Locale.ROOT));
             if (role != null) wanted.add(role);
         }
 
-        if (teamRoles && !teamRoleIds.isEmpty()) {
+        // Likewise: teamNameOf returns null both for "no team" and for "SimpleTeams is not
+        // answering". Only the first is a reason to take a team role away.
+        if (teamRoles && !teamRoleIds.isEmpty() && plugin.getTeamHook().available()) {
+            removable.addAll(teamRoleIds.values());
             final String team = plugin.getTeamHook().teamNameOf(player);
             final String role = team == null ? null : teamRoleIds.get(team.toLowerCase(Locale.ROOT));
             if (role != null) wanted.add(role);
         }
-        return wanted;
+        return new Desired(Set.copyOf(wanted), Set.copyOf(removable));
     }
 
     /**
      * Add what is missing, remove what is ours and no longer earned, and touch nothing else.
      */
-    private void apply(final Guild guild, final Member member, final Set<String> wanted) {
+    /**
+     * Reconcile one player and report what it did, so somebody fixing their own roles can see
+     * that something actually happened rather than being told "done" either way.
+     */
+    public void syncReporting(final UUID player, final java.util.function.Consumer<String> report) {
+        if (!bot.ready()) {
+            report.accept("off");
+            return;
+        }
+        if (!links.isLinked(player)) {
+            report.accept("unlinked");
+            return;
+        }
+        final Guild guild = bot.guild();
+        final long discordId = links.discordOf(player);
+        if (guild == null || discordId == 0L) {
+            report.accept("off");
+            return;
+        }
+
+        final Desired desired = wantedRoles(player);
+        guild.retrieveMemberById(discordId).queue(member -> {
+            final int changed = apply(guild, member, desired);
+            report.accept(changed == 0 ? "ok" : String.valueOf(changed));
+        }, error -> report.accept("notinguild"));
+    }
+
+    /** Every role id we own, for the one case where all of them are decidable. */
+    private Set<String> everything() {
+        final Set<String> all = new HashSet<>(rankRoles.values());
+        all.addAll(teamRoleIds.values());
+        if (!verifiedRole.isEmpty()) all.add(verifiedRole);
+        return all;
+    }
+
+    private int apply(final Guild guild, final Member member, final Desired desired) {
+        final Set<String> wanted = desired.wanted();
         final List<Role> add = new ArrayList<>();
         final List<Role> remove = new ArrayList<>();
 
@@ -216,13 +272,18 @@ public final class RoleSync implements Listener {
             if (!member.getRoles().contains(role) && canManage(guild, role)) add.add(role);
         }
         for (final Role role : member.getRoles()) {
-            if (wanted.contains(role.getId()) || !ours(role) || !canManage(guild, role)) continue;
+            // removable, not ours: a role we own but could not decide about this pass stays put.
+            if (wanted.contains(role.getId()) || !desired.removable().contains(role.getId())
+                    || !canManage(guild, role)) {
+                continue;
+            }
             remove.add(role);
         }
-        if (add.isEmpty() && remove.isEmpty()) return;
+        if (add.isEmpty() && remove.isEmpty()) return 0;
         guild.modifyMemberRoles(member, add, remove).queue(null,
                 error -> plugin.getLogger().warning("Could not update roles for "
                         + member.getUser().getName() + ": " + error));
+        return add.size() + remove.size();
     }
 
     /**
