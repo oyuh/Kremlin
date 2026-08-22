@@ -3,6 +3,7 @@ package me.lawsonhart.kremlin.discord;
 import me.lawsonhart.kremlin.combat.Combat;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.ChunkingFilter;
@@ -82,6 +83,7 @@ public final class Bot {
                     .build();
             jda.awaitReady();
             registerSlashCommands();
+            startPresence();
             plugin.getLogger().info("Discord bot connected as " + jda.getSelfUser().getAsTag() + ".");
         } catch (final InterruptedException ex) {
             Thread.currentThread().interrupt();
@@ -105,6 +107,28 @@ public final class Bot {
         guild.updateCommands().addCommands(SlashCommands.definitions()).queue(
                 ok -> plugin.getLogger().info("Registered " + ok.size() + " Discord command(s)."),
                 error -> plugin.getLogger().warning("Could not register Discord commands: " + error));
+    }
+
+    /** "Watching 3 players online". */
+    static String presence(final int online) {
+        return online + (online == 1 ? " player online" : " players online");
+    }
+
+    /**
+     * A timer, not a join/quit hook: Discord rate-limits presence updates hard enough that a
+     * busy server would spend its whole budget on people walking in and out.
+     *
+     * Runs on the global region scheduler so the player count is read from a server thread; the
+     * setActivity itself only queues a websocket frame.
+     */
+    private void startPresence() {
+        Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin.owner(), task -> {
+            if (jda == null) {
+                task.cancel();
+                return;
+            }
+            jda.getPresence().setActivity(Activity.watching(presence(Bukkit.getOnlinePlayers().size())));
+        }, 1L, 20L * 60L);
     }
 
     public void stop() {
