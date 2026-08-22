@@ -3,6 +3,7 @@ package me.lawsonhart.kremlin.options;
 import me.lawsonhart.kremlin.chat.Msg;
 import me.lawsonhart.kremlin.combat.Combat;
 import me.lawsonhart.kremlin.core.Users;
+import me.lawsonhart.kremlin.teleport.Tpa;
 import me.lawsonhart.kremlin.teleport.TpCommands;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -39,8 +40,11 @@ public final class OptionsGui implements Listener, CommandExecutor {
 
     private static final int SIZE = 27;
     private static final int SLOT_BAR = 10;
-    private static final int SLOT_MSG = 12;
-    private static final int SLOT_TP = 14;
+    private static final int SLOT_MSG = 11;
+    private static final int SLOT_MSG_SOUND = 12;
+    private static final int SLOT_TP = 13;
+    private static final int SLOT_TPA_SOUND = 14;
+    private static final int SLOT_TPA_AUTO = 15;
     private static final int SLOT_IGNORE = 16;
 
     private final Combat plugin;
@@ -83,12 +87,24 @@ public final class OptionsGui implements Listener, CommandExecutor {
     private void draw(final Player p, final Inventory inv) {
         inv.setItem(SLOT_BAR, barItem(p));
         inv.setItem(SLOT_MSG, toggleItem(Material.PAPER, "Private messages",
-                users.flag(p.getUniqueId(), Msg.TOGGLE, true),
-                "Whether other players can /msg you."));
+                flag(p, Msg.TOGGLE), "Whether other players can /msg you."));
+        inv.setItem(SLOT_MSG_SOUND, toggleItem(Material.EXPERIENCE_BOTTLE, "Message sound",
+                flag(p, Msg.SOUND), "An xp-orb ping when somebody messages you."));
         inv.setItem(SLOT_TP, toggleItem(Material.ENDER_PEARL, "Teleport requests",
-                users.flag(p.getUniqueId(), TpCommands.TOGGLE, true),
-                "Whether /tpa and /tp can bring you anywhere."));
+                flag(p, TpCommands.TOGGLE), "Whether /tpa and /tp can bring you anywhere."));
+        inv.setItem(SLOT_TPA_SOUND, toggleItem(Material.NOTE_BLOCK, "Teleport sound",
+                flag(p, Tpa.SOUND), "A ping when somebody asks to teleport to you."));
+        inv.setItem(SLOT_TPA_AUTO, toggleItem(Material.LIME_DYE, "Auto-accept teleports",
+                flag(p, Tpa.AUTO), "Let anyone teleport to you without asking."));
         inv.setItem(SLOT_IGNORE, ignoreItem(p));
+    }
+
+    /**
+     * Every toggle here reads true unless it is auto-accept, which has to be opted into --
+     * a default of "anyone may teleport to me" is not a default anybody chose.
+     */
+    private boolean flag(final Player p, final String key) {
+        return users.flag(p.getUniqueId(), key, !Tpa.AUTO.equals(key));
     }
 
     private ItemStack barItem(final Player p) {
@@ -154,7 +170,10 @@ public final class OptionsGui implements Listener, CommandExecutor {
         switch (event.getRawSlot()) {
             case SLOT_BAR -> plugin.cycleStyle(p);
             case SLOT_MSG -> flip(p, Msg.TOGGLE);
+            case SLOT_MSG_SOUND -> flip(p, Msg.SOUND);
             case SLOT_TP -> flip(p, TpCommands.TOGGLE);
+            case SLOT_TPA_SOUND -> flip(p, Tpa.SOUND);
+            case SLOT_TPA_AUTO -> flip(p, Tpa.AUTO);
             default -> {
                 return; // the ignore item and the empty slots do nothing
             }
@@ -163,7 +182,7 @@ public final class OptionsGui implements Listener, CommandExecutor {
     }
 
     private void flip(final Player p, final String key) {
-        users.set(p.getUniqueId(), key, !users.flag(p.getUniqueId(), key, true));
+        users.set(p.getUniqueId(), key, !flag(p, key));
     }
 
     /** Clicks alone don't stop a drag depositing items into the menu. */

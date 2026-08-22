@@ -3,7 +3,13 @@ plugins {
 }
 
 group = "me.lawsonhart"
-version = "1.0.0"
+
+// A tag build names itself after the tag, so pushing v1.2.0 produces Kremlin-1.2.0.jar with a
+// plugin.yml that agrees with it. Everything else stays on the number below.
+version = System.getenv("GITHUB_REF_NAME")
+    ?.takeIf { System.getenv("GITHUB_REF_TYPE") == "tag" }
+    ?.removePrefix("v")
+    ?: "1.0.0"
 
 repositories {
     mavenCentral()
@@ -23,6 +29,12 @@ dependencies {
     testImplementation("dev.folia:folia-api:26.2.build.4-beta")
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+// plugin.yml carries ${version} rather than a literal, so the jar and what the server reports
+// can never drift apart.
+tasks.processResources {
+    filesMatching("plugin.yml") { expand("version" to version) }
 }
 
 tasks.test {

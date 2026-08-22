@@ -38,6 +38,8 @@ import me.lawsonhart.kremlin.core.TeamHook;
 import me.lawsonhart.kremlin.teleport.Tpa;
 
 import io.papermc.paper.plugin.configuration.PluginMeta;
+import net.kyori.adventure.key.Key;
+import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -645,6 +647,18 @@ public final class Combat implements Listener, CommandExecutor {
 
     public Component displayName(Player who) {
         return who.displayName();
+    }
+
+    /**
+     * A one-shot UI sound for a player, played only when they still have that toggle on.
+     *
+     * Adventure's sound rather than Bukkit's on purpose: this is a packet to that one player and
+     * nothing else, so it is safe to call for somebody whose region thread we are not on --
+     * which is every /msg and every /tpa.
+     */
+    public void ping(Player p, String toggleKey, String sound) {
+        if (!users.flag(p.getUniqueId(), toggleKey, true)) return;
+        p.playSound(Sound.sound(Key.key(sound), Sound.Source.MASTER, 1f, 1f), Sound.Emitter.self());
     }
 
     public Messages messages() {
