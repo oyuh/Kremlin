@@ -17,11 +17,13 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * The staff teleport suite, plus /back and /top.
@@ -62,6 +64,8 @@ public final class TpCommands implements CommandExecutor, TabCompleter, Listener
     /** The users.yml key for /tptoggle. */
     public static final String TOGGLE = "tptoggle";
     private static final String LAST = "back";
+    /** Where a player was standing when they last logged out, so /tp can reach them offline. */
+    private static final String LAST_ONLINE = "lastonline";
 
     private final Combat plugin;
     private final Users users;
@@ -108,6 +112,9 @@ public final class TpCommands implements CommandExecutor, TabCompleter, Listener
         }
 
         final Player first = Names.resolve(plugin.getServer(), args[0]);
+        if (first == null && offlineDestination(here, args.length)) {
+            return toLastSeen(sender, args[0], override);
+        }
         if (first == null) {
             sender.sendMessage(plugin.msg("msg-unknown", Placeholder.unparsed("player", args[0])));
             return true;
@@ -129,8 +136,13 @@ public final class TpCommands implements CommandExecutor, TabCompleter, Listener
             }
             final Player second = Names.resolve(plugin.getServer(), args[1]);
             if (second == null) {
-                sender.sendMessage(plugin.msg("msg-unknown", Placeholder.unparsed("player", args[1])));
-                return true;
+                final Location last = lastSeen(args[1]);
+                if (last == null) {
+                    sender.sendMessage(plugin.msg("msg-unknown", Placeholder.unparsed("player", args[1])));
+                    return true;
+                }
+                sender.sendMessage(plugin.msg("tp-offline", Placeholder.unparsed("player", args[1])));
+                return move(sender, first, last, override);
             }
             return move(sender, first, second.getLocation(), override);
         }
@@ -321,6 +333,55 @@ public final class TpCommands implements CommandExecutor, TabCompleter, Listener
         users.set(p.getUniqueId(), LAST, p.getLocation().clone());
     }
 
+    // ---------------------------------------------------------------- offline destinations
+
+    /**
+     * Whether a first name that matched nobody online should be read as a place to go rather
+     * than as a typo.
+     *
+     * Only when it is the destination. /tphere Bob and /tp Bob Steve both ask an offline player
+     * to walk somewhere, which nobody can do, so those stay "never seen a player called Bob".
+     */
+    static boolean offlineDestination(final boolean here, final int argc) {
+        return !here && argc == 1;
+    }
+
+    /**
+     * Where a named player was when they last logged out, or null if we never saw them go.
+     *
+     * {@code plugin.findPlayer} rather than a raw name lookup, so a nickname works here for the
+     * same reason it works in /history -- the name staff read off the screen is the one they type.
+     */
+    private Location lastSeen(final String name) {
+        final UUID id = plugin.findPlayer(name);
+        return id == null ? null : users.location(id, LAST_ONLINE);
+    }
+
+    /** /tp to somebody who is offline: their last known standing spot. */
+    private boolean toLastSeen(final CommandSender sender, final String name, final boolean override) {
+        if (!(sender instanceof Player mover)) {
+            sender.sendMessage(plugin.msg("console-needs-player"));
+            return true;
+        }
+        final Location last = lastSeen(name);
+        if (last == null) {
+            sender.sendMessage(plugin.msg("msg-unknown", Placeholder.unparsed("player", name)));
+            return true;
+        }
+        sender.sendMessage(plugin.msg("tp-offline", Placeholder.unparsed("player", name)));
+        return move(sender, mover, last, override);
+    }
+
+    /**
+     * Their last standing spot, kept for /tp. Fires for a kick too; a server that dies without
+     * running this simply keeps whatever the previous logout wrote, which is the right answer
+     * more often than nothing is.
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onQuit(final PlayerQuitEvent event) {
+        users.set(event.getPlayer().getUniqueId(), LAST_ONLINE, event.getPlayer().getLocation().clone());
+    }
+
     /**
      * Dying is the one everybody actually wants /back for. MONITOR because we only read where
      * they were; anything that cancels or relocates the death has already had its say.
@@ -388,13 +449,16 @@ public final class TpCommands implements CommandExecutor, TabCompleter, Listener
         final String cmd = Combat.rootCommand(label);
         if (BACK.contains(cmd) || TOP.contains(cmd) || TPAALL.contains(cmd)) return List.of();
         if (TPPOS.contains(cmd)) return List.of();
-        final List<String> online = Names.online(plugin.getServer(), List.of());
         if (TPTOGGLE.contains(cmd)) {
             final List<String> options = new ArrayList<>(List.of("on", "off"));
-            options.addAll(online);
+            options.addAll(Names.online(plugin.getServer(), List.of()));
             return args.length == 1 ? Names.filter(args[0], options) : List.of();
         }
-        if (args.length == 1) return Names.filter(args[0], online);
-        return args.length == 2 && TP.contains(cmd) ? Names.filter(args[1], online) : List.of();
+        // /tp and /tpo reach offline players now, so suggest them; nothing else does.
+        final boolean offlineToo = TP.contains(cmd) || TPO.contains(cmd);
+        final List<String> names = Names.online(plugin.getServer(),
+                offlineToo ? Names.offlineNames(plugin.getServer()) : List.of());
+        if (args.length == 1) return Names.filter(args[0], names);
+        return args.length == 2 && TP.contains(cmd) ? Names.filter(args[1], names) : List.of();
     }
 }

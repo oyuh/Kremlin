@@ -57,12 +57,18 @@ public final class Tpa implements Listener, CommandExecutor, TabCompleter {
     public static final Set<String> DENY = Set.of("tpdeny", "tpno");
     public static final Set<String> CANCEL = Set.of("tpacancel", "tpcancel");
 
+    /** users.yml key for the ping on an incoming request. On unless turned off. */
+    public static final String SOUND = "tpasound";
+    /** users.yml key for auto-accept. Off by default -- opting in is the whole point. */
+    public static final String AUTO = "tpaauto";
+
     private static final int SIZE = 54;
     private static final int PLAYERS_START = 9;
     private static final int PLAYERS_END = 44;
     private static final int PER_PAGE = PLAYERS_END - PLAYERS_START + 1;
     private static final int SLOT_PREV = 45;
     private static final int SLOT_NEXT = 53;
+    private static final int SLOT_AUTO = 47;
 
     private final Combat plugin;
     /** target -> (requester -> request) */
@@ -158,6 +164,16 @@ public final class Tpa implements Listener, CommandExecutor, TabCompleter {
         return left;
     }
 
+    /**
+     * Whether an incoming request goes through without asking.
+     *
+     * A /tpahere never does, however the toggle reads: that one moves the player who set it, and
+     * "yes to anything" must not turn into "anybody can drag me anywhere".
+     */
+    static boolean autoAccepts(boolean here, boolean autoOn) {
+        return autoOn && !here;
+    }
+
     /** Drop expired entries so nothing shows a request that can no longer be accepted. */
     private Map<UUID, Request> live(UUID target) {
         Map<UUID, Request> mine = incoming.get(target);
@@ -199,6 +215,11 @@ public final class Tpa implements Listener, CommandExecutor, TabCompleter {
             return;
         }
 
+        if (autoAccepts(here, plugin.getUsers().flag(target.getUniqueId(), AUTO, false))) {
+            complete(new Request(from.getUniqueId(), target.getUniqueId(), false, 0L), target, from);
+            return;
+        }
+
         Request request = new Request(from.getUniqueId(), target.getUniqueId(), here,
                 System.currentTimeMillis() + requestMillis);
         incoming.computeIfAbsent(target.getUniqueId(), k -> new ConcurrentHashMap<>())
@@ -208,6 +229,7 @@ public final class Tpa implements Listener, CommandExecutor, TabCompleter {
                 Placeholder.component("player", target.displayName()),
                 Placeholder.unparsed("time", String.valueOf(requestMillis / 1000))));
         target.sendMessage(prompt(from.getName(), from.displayName(), here));
+        plugin.ping(target, SOUND, "block.note_block.pling");
     }
 
     /** The clickable [Accept] / [Deny] line. */
@@ -361,6 +383,14 @@ public final class Tpa implements Listener, CommandExecutor, TabCompleter {
             inv.setItem(SLOT_PREV, item(Material.ARROW, "<white>Previous page", List.of()));
             inv.setItem(SLOT_NEXT, item(Material.ARROW, "<white>Next page", List.of()));
         }
+        boolean auto = plugin.getUsers().flag(p.getUniqueId(), AUTO, false);
+        inv.setItem(SLOT_AUTO, item(auto ? Material.LIME_DYE : Material.GRAY_DYE,
+                (auto ? "<green>" : "<red>") + "Auto-accept: <white>" + (auto ? "on" : "off"),
+                List.of("<gray>Accept every request to teleport to you,",
+                        "<gray>without being asked first.",
+                        "<dark_gray>Requests to send you somewhere still ask.",
+                        "",
+                        "<yellow>Click to " + (auto ? "turn off" : "turn on"))));
         inv.setItem(49, item(Material.PAPER, "<gold>Page " + (page + 1) + " / " + pages, List.of(
                 "<gray>Online: <white>" + online.size(),
                 "<gray>Requests waiting on you: <white>" + pending.size())));
@@ -388,6 +418,12 @@ public final class Tpa implements Listener, CommandExecutor, TabCompleter {
             p.closeInventory();
             if (other == null) p.sendMessage(plugin.msg("tpa-offline", Placeholder.component("player", Component.text("they"))));
             else sendTo(p, other, e.isRightClick());
+            return;
+        }
+        if (slot == SLOT_AUTO) {
+            UUID id = p.getUniqueId();
+            plugin.getUsers().set(id, AUTO, !plugin.getUsers().flag(id, AUTO, false));
+            openGui(p, menu.page);
             return;
         }
         if (slot == SLOT_PREV) openGui(p, menu.page - 1);

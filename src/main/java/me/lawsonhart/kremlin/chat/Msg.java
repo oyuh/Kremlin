@@ -30,6 +30,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class Msg implements CommandExecutor, TabCompleter, Listener {
 
     public static final String TOGGLE = "msgtoggle";
+    /** users.yml key for the ping on an incoming message. On unless turned off in /options. */
+    public static final String SOUND = "msgsound";
 
     private final Combat plugin;
     private final Users users;
@@ -107,6 +109,7 @@ public final class Msg implements CommandExecutor, TabCompleter, Listener {
                 Placeholder.component("player", to.displayName()), Placeholder.component("message", body)));
         to.sendMessage(plugin.msg("msg-received",
                 Placeholder.component("player", from.displayName()), Placeholder.component("message", body)));
+        plugin.ping(to, SOUND, "entity.experience_orb.pickup");
         replyTo.put(to.getUniqueId(), from.getUniqueId());
         replyTo.put(from.getUniqueId(), to.getUniqueId());
     }

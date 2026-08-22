@@ -1,5 +1,5 @@
 name: Kremlin
-version: 1.0.0
+version: ${version}
 main: me.lawsonhart.kremlin.Kremlin
 api-version: '26.2'
 author: Lawson Hart
@@ -183,7 +183,7 @@ commands:
     usage: /history <player>
     aliases: [punishments, ehistory]
   options:
-    description: Your own settings -- combat bar, messages, teleports.
+    description: Your own settings -- combat bar, messages, teleports, sounds.
     usage: /options
     aliases: [settings, kremlinoptions]
   warp:
@@ -203,7 +203,7 @@ commands:
     usage: /delwarp <name>
     aliases: [edelwarp, remwarp, removewarp]
   tp:
-    description: Teleport to a player, or a player to a player.
+    description: Teleport to a player, or a player to a player. An offline name goes to where they logged out.
     usage: /tp <player> [player]
     aliases: [etp, tele, tp2p]
   tphere:
