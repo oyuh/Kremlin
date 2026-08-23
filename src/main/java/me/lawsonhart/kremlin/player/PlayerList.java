@@ -163,8 +163,11 @@ public final class PlayerList implements Listener, CommandExecutor {
      * Read from JDA's cache rather than fetched: this runs once per row while a page is being
      * built, and forty-five blocking lookups to answer one menu is not a trade worth making. An
      * id we cannot put a name to is shown as the id, which is still enough to find them.
+     *
+     * Package-private rather than private because /whois shows the same thing, off the same
+     * cache -- a second copy of this in {@link Lookup} would be a second thing to get wrong.
      */
-    private String discordOf(UUID id) {
+    String discordOf(UUID id) {
         long discord = plugin.getLinks().discordOf(id);
         if (discord == 0L) return null;
         var jda = plugin.getBot().ready() ? plugin.getBot().jda() : null;
@@ -246,6 +249,8 @@ public final class PlayerList implements Listener, CommandExecutor {
     private static final class Menu implements InventoryHolder {
         Inventory inv;
         int page;
+        /** The page as drawn, so a click knows whose head it landed on. */
+        List<Row> rows = List.of();
 
         @Override
         public Inventory getInventory() {
@@ -256,6 +261,7 @@ public final class PlayerList implements Listener, CommandExecutor {
     private void draw(Player viewer, List<Row> rows, int page, int pages, int total) {
         Menu menu = new Menu();
         menu.page = page;
+        menu.rows = rows;
         Inventory inv = plugin.getServer().createInventory(menu, SIZE, plugin.msg("playerlist-title"));
         menu.inv = inv;
 
@@ -343,6 +349,28 @@ public final class PlayerList implements Listener, CommandExecutor {
         if (!(e.getWhoClicked() instanceof Player p)) return;
         if (e.getRawSlot() == SLOT_PREV) open(p, menu.page - 1);
         else if (e.getRawSlot() == SLOT_NEXT) open(p, menu.page + 1);
+        else if (e.isLeftClick()) whois(p, menu, e.getRawSlot());
+    }
+
+    /**
+     * Left-clicking a head asks /whois about them.
+     *
+     * Dispatched as the command rather than calling {@link Lookup} directly, so the answer is
+     * exactly what typing it would have given -- including its own permission check, which is
+     * why the node here only decides whether the click does anything at all.
+     *
+     * Closing first is the point: chat is hidden behind an open inventory, so a /whois sent to
+     * somebody staring at the menu would never be read. Both happen on the viewer's own region a
+     * tick later, because closing an inventory from inside its own click event is asking for it.
+     */
+    private void whois(Player viewer, Menu menu, int slot) {
+        if (slot < 0 || slot >= menu.rows.size()) return;
+        if (!viewer.hasPermission("kremlin.playerlist.whois")) return;
+        String name = menu.rows.get(slot).name();
+        viewer.getScheduler().run(plugin.owner(), t -> {
+            viewer.closeInventory();
+            viewer.performCommand("whois " + name);
+        }, null);
     }
 
     @EventHandler

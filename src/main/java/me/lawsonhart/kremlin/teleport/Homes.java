@@ -764,9 +764,14 @@ public final class Homes implements Listener, CommandExecutor, TabCompleter {
         return names.values();
     }
 
+    /** Only the homes they actually set -- no bed, no community hub. What /whois counts. */
+    public List<String> setHomesOf(UUID owner) {
+        return new ArrayList<>(mine(owner).keySet());
+    }
+
     /** One player's home names, plus the two shortcuts that share the namespace. */
     public List<String> homeNamesOf(UUID owner) {
-        List<String> out = new ArrayList<>(mine(owner).keySet());
+        List<String> out = setHomesOf(owner);
         out.add(BED);
         if (communityHub != null) out.add(HUB);
         return out;

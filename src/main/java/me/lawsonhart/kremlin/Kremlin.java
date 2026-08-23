@@ -61,7 +61,7 @@ public final class Kremlin extends JavaPlugin {
         handle(this.combat.getIgnore(), "ignore");
         command("broadcast").setExecutor(this.combat.getBroadcast());
         handle(this.combat.getNicknames(), "nick");
-        handle(this.combat.getLookup(), "seen", "whois", "list", "playtime");
+        handle(this.combat.getLookup(), "seen", "whois", "realname", "list", "playtime", "ping");
         handle(this.combat.getPlayerCommands(), "heal", "feed", "kill", "fly", "speed",
                 "sudo", "weather", "gamemode", "gms", "gmc", "gma", "gmsp");
         handle(this.combat.getItemCommands(), "repair", "more", "give", "skull", "itemname",

@@ -298,6 +298,10 @@ commands:
     description: Everything known about a player.
     usage: /whois <player>
     aliases: [ewhois]
+  realname:
+    description: The account behind a nickname.
+    usage: /realname <nickname>
+    aliases: [erealname]
   list:
     description: Who is online.
     usage: /list
@@ -306,6 +310,10 @@ commands:
     description: How long a player has been on the server.
     usage: /playtime [player]
     aliases: [eplaytime, played, ontime]
+  ping:
+    description: A player's latency to the server.
+    usage: /ping [player]
+    aliases: [eping, latency]
   heal:
     description: Restore health and hunger.
     usage: /heal [player]
@@ -420,6 +428,9 @@ permissions:
     default: true
   kremlin.playerlist:
     description: Open /playerlist.
+    default: op
+  kremlin.playerlist.whois:
+    description: Left-click a head in /playerlist to run /whois on them.
     default: op
   kremlin.invsee:
     description: Open anyone's inventory, online or offline, and change it. essentials.invsee also works.
@@ -640,6 +651,9 @@ permissions:
   kremlin.whois:
     description: Use /whois. essentials.whois also works.
     default: true
+  kremlin.realname:
+    description: Use /realname. essentials.realname also works.
+    default: true
   kremlin.list:
     description: Use /list. essentials.list also works.
     default: true
@@ -648,6 +662,12 @@ permissions:
     default: true
   kremlin.playtime.others:
     description: See another player's playtime. essentials.playtime.others also works.
+    default: true
+  kremlin.ping:
+    description: See your own ping. essentials.ping also works.
+    default: true
+  kremlin.ping.others:
+    description: See another player's ping. essentials.ping.others also works.
     default: true
   kremlin.heal:
     description: Heal yourself. essentials.heal also works.
